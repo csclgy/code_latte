@@ -398,60 +398,112 @@
   </div>
 
   <!-- INLINE FORM -->
-  <div class="form-panel" id="emp-form-panel">
-    <h2 id="form-title">New Employee</h2>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>First Name</label>
-        <input type="text" id="f-first" placeholder="First name"/>
-      </div>
-      <div class="form-group">
-        <label>Last Name</label>
-        <input type="text" id="f-last" placeholder="Last name"/>
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="f-email" placeholder="email@codelatte.com"/>
-      </div>
-      <div class="form-group">
-        <label>Contact</label>
-        <input type="text" id="f-contact" placeholder="+63 9XX XXX XXXX"/>
-      </div>
-      <div class="form-group">
-        <label>Role</label>
-        <select id="f-role">
-          <option>Barista</option>
-          <option>Cashier</option>
-          <option>Kitchen Staff</option>
-          <option>Supervisor</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Shift</label>
-        <select id="f-shift">
-          <option value="Morning">Morning (6AM–2PM)</option>
-          <option value="Afternoon">Afternoon (2PM–10PM)</option>
-          <option value="Evening">Evening (10PM–6AM)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Date Hired</label>
-        <input type="date" id="f-date"/>
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select id="f-status">
-          <option>Active</option>
-          <option>On Leave</option>
-          <option>Inactive</option>
-        </select>
-      </div>
+<div class="form-panel" id="emp-form-panel">
+  <h2 id="form-title">New Employee</h2>
+  <div class="form-grid">
+
+    <div class="form-group">
+      <label>First Name</label>
+      <input type="text" id="f-fname" name="emp_fname" placeholder="First name"/>
     </div>
-    <div class="form-actions">
-      <button class="btn-save" onclick="saveEmployee()">Save</button>
-      <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+
+    <div class="form-group">
+      <label>Last Name</label>
+      <input type="text" id="f-lname" name="emp_lname" placeholder="Last name"/>
     </div>
+
+    <div class="form-group">
+      <label>Middle Name</label>
+      <input type="text" id="f-mname" name="emp_mname" placeholder="Middle name"/>
+    </div>
+
+    <div class="form-group">
+      <label>Age</label>
+      <input type="number" id="f-age" name="emp_age" placeholder="e.g. 25" min="16" max="80"/>
+    </div>
+
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="f-email" name="emp_email" placeholder="email@codelatte.com"/>
+    </div>
+
+    <div class="form-group">
+      <label>Contact</label>
+      <input type="text" id="f-contact" name="emp_contact" placeholder="+63 9XX XXX XXXX"/>
+    </div>
+
+    <div class="form-group" style="grid-column: 1 / -1;">
+      <label>Address</label>
+      <input type="text" id="f-address" name="emp_address" placeholder="Street, Barangay, City"/>
+    </div>
+
+    <div class="form-group">
+      <label>Department</label>
+      <select id="f-dept" name="dept_id">
+        <option value="">Select department...</option>
+        <!-- populate from your dept table -->
+        <option value="1">Kitchen</option>
+        <option value="2">Front of House</option>
+        <option value="3">Management</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Position</label>
+      <select id="f-pos" name="Pos_id">
+        <option value="">Select position...</option>
+        <!-- populate from your position table -->
+        <option value="1">Barista</option>
+        <option value="2">Cashier</option>
+        <option value="3">Kitchen Staff</option>
+        <option value="4">Supervisor</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Schedule</label>
+      <select id="f-schedule" name="emp_schedule">
+        <option value="Morning">Morning (6AM–2PM)</option>
+        <option value="Afternoon">Afternoon (2PM–10PM)</option>
+        <option value="Evening">Evening (10PM–6AM)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Working Hours</label>
+      <input type="number" id="f-hours" name="emp_working_hours" placeholder="e.g. 8" min="1" max="24"/>
+    </div>
+
+    <div class="form-group">
+      <label>Date Hired</label>
+      <input type="date" id="f-date" name="emp_date_hired"/>
+    </div>
+
+    <div class="form-group">
+      <label>Status</label>
+      <select id="f-status" name="emp_status">
+        <option value="Active">Active</option>
+        <option value="On Leave">On Leave</option>
+        <option value="Inactive">Inactive</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="f-username" name="user_name" placeholder="e.g. jreyes"/>
+    </div>
+
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="f-password" name="user_password" placeholder="Set a password"/>
+    </div>
+
   </div>
+  <div class="form-actions">
+    <button class="btn-save" onclick="saveEmployee()">Save</button>
+    <button class="btn-cancel" onclick="closeForm()">Cancel</button>
+  </div>
+</div>
 
   <!-- TABLE PANEL -->
   <div class="table-panel">
@@ -508,21 +560,38 @@
 </div>
 
 <script>
-  let employees = [
-    { id:'#001', first:'Juan',  last:'Reyes',     email:'juan@codelatte.com',  contact:'+63 912 345 6789', role:'Barista',       shift:'Morning',   date:'Jan 10, 2024', status:'Active'   },
-    { id:'#002', first:'Maria', last:'Cruz',      email:'maria@codelatte.com', contact:'+63 917 234 5678', role:'Cashier',       shift:'Morning',   date:'Mar 15, 2024', status:'Active'   },
-    { id:'#003', first:'Ramon', last:'Lopez',     email:'ramon@codelatte.com', contact:'+63 918 765 4321', role:'Barista',       shift:'Morning',   date:'Nov 20, 2023', status:'On Leave' },
-    { id:'#004', first:'Ana',   last:'Santos',    email:'ana@codelatte.com',   contact:'+63 920 111 2222', role:'Supervisor',    shift:'Morning',   date:'Jun 1, 2023',  status:'Active'   },
-    { id:'#005', first:'Karl',  last:'Dela Cruz', email:'karl@codelatte.com',  contact:'+63 915 333 4444', role:'Kitchen Staff', shift:'Afternoon', date:'Jul 1, 2024',  status:'Active'   },
-  ];
+  const BASE = '/hrm_module/src/api/hr/employees';
 
+  let employees   = [];
   let editIndex   = null;
   let deleteIndex = null;
 
+  // ── LOAD ──
+  async function loadEmployees() {
+    try {
+      const res  = await fetch(`${BASE}/get_employees.php`);
+      const json = await res.json();
+      if (json.success) {
+        employees = json.data;
+        filterTable();
+      } else {
+        console.error('Failed to load:', json.error);
+      }
+    } catch (err) {
+      console.error('Load error:', err);
+    }
+  }
+
+  // ── RENDER TABLE ──
   function statusClass(s) {
     if (s === 'Active')   return 'active';
     if (s === 'On Leave') return 'on-leave';
     return 'inactive';
+  }
+
+  function getPosLabel(pos_id) {
+    const map = { '1':'Barista', '2':'Cashier', '3':'Kitchen Staff', '4':'Supervisor' };
+    return map[String(pos_id)] || '—';
   }
 
   function renderTable(list) {
@@ -533,13 +602,13 @@
       const realIdx = employees.indexOf(e);
       return `
         <tr>
-          <td class="id-cell">${e.id}</td>
-          <td class="name-cell">${e.first} ${e.last}</td>
-          <td><span class="role-badge">${e.role}</span></td>
-          <td class="shift-cell">${e.shift}</td>
-          <td class="date-cell">${e.date}</td>
-          <td><span class="status-badge ${statusClass(e.status)}">
-            <span class="status-dot"></span>${e.status}
+          <td class="id-cell">#${String(e.emp_id).padStart(3,'0')}</td>
+          <td class="name-cell">${e.emp_fname} ${e.emp_lname}</td>
+          <td><span class="role-badge">${getPosLabel(e.pos_id)}</span></td>
+          <td class="shift-cell">${e.emp_schedule ?? '—'}</td>
+          <td class="date-cell">${e.emp_date_hired ?? '—'}</td>
+          <td><span class="status-badge ${statusClass(e.emp_status)}">
+            <span class="status-dot"></span>${e.emp_status}
           </span></td>
           <td>
             <div class="actions">
@@ -551,19 +620,21 @@
     }).join('');
   }
 
+  // ── FILTER ──
   function filterTable() {
     const q  = document.getElementById('search-input').value.toLowerCase();
     const rf = document.getElementById('role-filter').value;
     const sf = document.getElementById('status-filter').value;
     const filtered = employees.filter(e => {
-      const fullName = (e.first + ' ' + e.last).toLowerCase();
-      return (!q  || fullName.includes(q) || e.id.includes(q)) &&
-             (!rf || e.role === rf) &&
-             (!sf || e.status === sf);
+      const fullName = (e.emp_fname + ' ' + e.emp_lname).toLowerCase();
+      return (!q  || fullName.includes(q) || String(e.emp_id).includes(q)) &&
+             (!rf || String(e.pos_id) === rf) &&
+             (!sf || e.emp_status === sf);
     });
     renderTable(filtered);
   }
 
+  // ── FORM TOGGLE ──
   function toggleForm() {
     const panel = document.getElementById('emp-form-panel');
     if (panel.classList.contains('open')) {
@@ -582,70 +653,143 @@
   }
 
   function clearForm() {
-    ['f-first','f-last','f-email','f-contact','f-date'].forEach(id =>
-      document.getElementById(id).value = '');
-    document.getElementById('f-role').value   = 'Barista';
-    document.getElementById('f-shift').value  = 'Morning';
-    document.getElementById('f-status').value = 'Active';
+    ['f-fname','f-lname','f-mname','f-email','f-contact',
+     'f-address','f-date','f-hours','f-age','f-username','f-password'
+    ].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-dept').value     = '';
+    document.getElementById('f-pos').value      = '';
+    document.getElementById('f-schedule').value = 'Morning';
+    document.getElementById('f-status').value   = 'Active';
   }
 
+  // ── OPEN EDIT FORM ──
   function openEditForm(idx) {
     editIndex = idx;
     const e = employees[idx];
     document.getElementById('form-title').textContent = 'Edit Employee';
-    document.getElementById('f-first').value   = e.first;
-    document.getElementById('f-last').value    = e.last;
-    document.getElementById('f-email').value   = e.email;
-    document.getElementById('f-contact').value = e.contact;
-    document.getElementById('f-role').value    = e.role;
-    document.getElementById('f-shift').value   = e.shift;
-    document.getElementById('f-status').value  = e.status;
-    const d = new Date(e.date);
-    if (!isNaN(d)) document.getElementById('f-date').value = d.toISOString().split('T')[0];
+
+    document.getElementById('f-fname').value    = e.emp_fname    ?? '';
+    document.getElementById('f-lname').value    = e.emp_lname    ?? '';
+    document.getElementById('f-mname').value    = e.emp_mname    ?? '';
+    document.getElementById('f-email').value    = e.emp_email    ?? '';
+    document.getElementById('f-contact').value  = e.emp_contact  ?? '';
+    document.getElementById('f-address').value  = e.emp_address  ?? '';
+    document.getElementById('f-dept').value     = e.dept_id      ?? '';
+    document.getElementById('f-pos').value      = e.pos_id       ?? '';
+    document.getElementById('f-schedule').value = e.emp_schedule ?? 'Morning';
+    document.getElementById('f-hours').value    = e.emp_working_hours ?? '';
+    document.getElementById('f-age').value      = e.emp_age      ?? '';
+    document.getElementById('f-status').value   = e.emp_status   ?? 'Active';
+    document.getElementById('f-username').value = e.User_name    ?? '';
+    document.getElementById('f-password').value = ''; // never pre-fill
+
+    // format date for input[type=date]
+    if (e.emp_date_hired) {
+      const d = new Date(e.emp_date_hired);
+      if (!isNaN(d)) document.getElementById('f-date').value = d.toISOString().split('T')[0];
+    }
+
     document.getElementById('emp-form-panel').classList.add('open');
   }
 
-  function saveEmployee() {
-    const first   = document.getElementById('f-first').value.trim();
-    const last    = document.getElementById('f-last').value.trim();
-    const email   = document.getElementById('f-email').value.trim();
-    const contact = document.getElementById('f-contact').value.trim();
-    const role    = document.getElementById('f-role').value;
-    const shift   = document.getElementById('f-shift').value;
-    const status  = document.getElementById('f-status').value;
-    const rawDate = document.getElementById('f-date').value;
-    if (!first || !last) { alert('Please enter first and last name.'); return; }
-    const dateStr = rawDate
-      ? new Date(rawDate).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'})
-      : '—';
-    if (editIndex === null) {
-      const newId = '#' + String(employees.length + 1).padStart(3, '0');
-      employees.push({ id: newId, first, last, email, contact, role, shift, date: dateStr, status });
-    } else {
-      employees[editIndex] = { ...employees[editIndex], first, last, email, contact, role, shift, date: dateStr, status };
+  // ── SAVE (Add or Edit) ──
+  async function saveEmployee() {
+    const fname    = document.getElementById('f-fname').value.trim();
+    const lname    = document.getElementById('f-lname').value.trim();
+    const dept_id  = document.getElementById('f-dept').value;
+    const pos_id   = document.getElementById('f-pos').value;
+    const username = document.getElementById('f-username').value.trim();
+    const password = document.getElementById('f-password').value;
+
+    // Validation
+    if (!fname || !lname)        { alert('Please enter first and last name.'); return; }
+    if (!dept_id)                { alert('Please select a department.'); return; }
+    if (!pos_id)                 { alert('Please select a position.'); return; }
+    if (!username)               { alert('Please enter a username.'); return; }
+    if (editIndex === null && !password) { alert('Please enter a password.'); return; }
+
+    const payload = {
+      emp_fname:         fname,
+      emp_lname:         lname,
+      emp_mname:         document.getElementById('f-mname').value.trim(),
+      emp_email:         document.getElementById('f-email').value.trim(),
+      emp_contact:       document.getElementById('f-contact').value.trim(),
+      emp_address:       document.getElementById('f-address').value.trim(),
+      emp_age:           document.getElementById('f-age').value || null,
+      dept_id:           dept_id,
+      pos_id:            pos_id,
+      emp_schedule:      document.getElementById('f-schedule').value,
+      emp_working_hours: document.getElementById('f-hours').value || null,
+      emp_date_hired:    document.getElementById('f-date').value || null,
+      emp_status:        document.getElementById('f-status').value,
+      user_name:         username,
+      user_password:     password,
+    };
+
+    // If editing, attach the emp_id
+    const isEdit = editIndex !== null;
+    if (isEdit) payload.emp_id = employees[editIndex].emp_id;
+
+    try {
+      const res  = await fetch(`${BASE}/${isEdit ? 'update_employee' : 'add_employee'}.php`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        closeForm();
+        loadEmployees(); // re-fetch from DB to stay in sync
+      } else {
+        alert('Error: ' + json.error);
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      alert('Something went wrong. Check the console.');
     }
-    closeForm();
-    filterTable();
   }
 
+  // ── DELETE ──
   function openDeleteModal(idx) {
     deleteIndex = idx;
     document.getElementById('del-modal').classList.add('open');
   }
+
   function closeDeleteModal() {
     document.getElementById('del-modal').classList.remove('open');
   }
-  function confirmDelete() {
-    if (deleteIndex !== null) employees.splice(deleteIndex, 1);
-    closeDeleteModal();
-    filterTable();
+
+  async function confirmDelete() {
+    if (deleteIndex === null) return;
+
+    try {
+      const res  = await fetch(`${BASE}/delete_employee.php`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ emp_id: employees[deleteIndex].emp_id }),
+      });
+      const json = await res.json();
+
+      if (json.success) {
+        closeDeleteModal();
+        loadEmployees(); // re-fetch from DB
+      } else {
+        alert('Error: ' + json.error);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Something went wrong. Check the console.');
+    }
   }
 
+  // close delete modal on overlay click
   document.getElementById('del-modal').addEventListener('click', function(e) {
     if (e.target === this) closeDeleteModal();
   });
 
-  renderTable(employees);
+  // ── INIT ──
+  loadEmployees();
 </script>
 </body>
 </html>
