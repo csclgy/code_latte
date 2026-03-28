@@ -1,0 +1,1 @@
+This folder is for css files purposes only!

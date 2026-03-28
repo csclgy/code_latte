@@ -1,0 +1,1 @@
+This folder is for employees endpoints only!

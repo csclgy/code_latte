@@ -269,19 +269,19 @@ $base = '/hrm_module/';
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Dashboard
     </a>
-    <a href="<?= $base ?>/pages/employee_management_hr.php">
+    <a href="<?= $base ?>pages/employee_management_hr.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
       Employees
     </a>
-    <a href="<?= $base ?>/pagesattendance_hr.php">
+    <a href="<?= $base ?>pages/attendance_hr.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
       Attendance
     </a>
-    <a href="<?= $base ?>/pagespayroll_hr.php">
+    <a href="<?= $base ?>pages/payroll_hr.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
       Payroll
     </a>
-    <a href="<?= $base ?>/pagesrecruitment_hr.php">
+    <a href="<?= $base ?>pages/recruitment_hr.php">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="16.65" y1="16.65" x2="21" y2="21"/></svg>
       Recruitment
     </a>
