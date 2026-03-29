@@ -532,11 +532,7 @@
         <label>Employee</label>
         <select id="m-employee">
           <option value="">Select employee…</option>
-          <option>Ana Santos</option>
-          <option>Juan Reyes</option>
-          <option>Karl Dela Cruz</option>
-          <option>Maria Cruz</option>
-          <option>Ramon Lopez</option>
+          <!-- populated dynamically from DB -->
         </select>
       </div>
       <div class="modal-group">
@@ -591,34 +587,61 @@
 </div>
 
 <script>
-  // Role lookup
-  const roleMap = {
-    'Ana Santos':    'Supervisor',
-    'Juan Reyes':    'Barista',
-    'Karl Dela Cruz':'Kitchen Staff',
-    'Maria Cruz':    'Cashier',
-    'Ramon Lopez':   'Barista',
-  };
-  const shiftMap = {
-    'Ana Santos':    'Morning',
-    'Juan Reyes':    'Morning',
-    'Karl Dela Cruz':'Afternoon',
-    'Maria Cruz':    'Morning',
-    'Ramon Lopez':   'Morning',
-  };
+  const BASE_ATT = '/hrm_module/src/api/hr/attendance';
 
-  let records = [
-    { date:'Mar 5, 2026',  name:'Ana Santos',     role:'Supervisor',    shift:'Morning',   timeIn:'5:58 AM',  timeOut:'2:00 PM',  hours:'8.0h', status:'Present'  },
-    { date:'Mar 5, 2026',  name:'Juan Reyes',     role:'Barista',       shift:'Morning',   timeIn:'6:03 AM',  timeOut:'2:05 PM',  hours:'8.0h', status:'Present'  },
-    { date:'Mar 5, 2026',  name:'Karl Dela Cruz', role:'Kitchen Staff', shift:'Afternoon', timeIn:'–',        timeOut:'–',        hours:'–',    status:'Absent'   },
-    { date:'Mar 5, 2026',  name:'Maria Cruz',     role:'Cashier',       shift:'Morning',   timeIn:'6:40 AM',  timeOut:'–',        hours:'–',    status:'Late'     },
-    { date:'Mar 5, 2026',  name:'Ramon Lopez',    role:'Barista',       shift:'Morning',   timeIn:'–',        timeOut:'–',        hours:'–',    status:'On Leave' },
-    { date:'Mar 4, 2026',  name:'Juan Reyes',     role:'Barista',       shift:'Morning',   timeIn:'6:01 AM',  timeOut:'2:02 PM',  hours:'8.0h', status:'Present'  },
-  ];
+  let records     = [];
+  let editIdx     = null;
+  let deleteIdx   = null;
 
-  let editIdx   = null;
-  let deleteIdx = null;
+  // ── LOAD EMPLOYEES INTO DROPDOWN ──
+  async function loadEmployeeDropdown() {
+    try {
+      const res  = await fetch(`${BASE_ATT}/get_employees_dropdown.php`);
+      const json = await res.json();
+      if (json.success) {
+        const sel = document.getElementById('m-employee');
+        sel.innerHTML = '<option value="">Select employee…</option>';
+        json.data.forEach(e => {
+          const opt = document.createElement('option');
+          opt.value       = e.emp_id;
+          opt.textContent = e.emp_fname + ' ' + e.emp_lname;
+          opt.dataset.schedule = e.emp_schedule; // store schedule for auto-fill
+          sel.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error('Dropdown error:', err);
+    }
+  }
 
+  // ── LOAD ATTENDANCE RECORDS ──
+  async function loadAttendance() {
+    try {
+      const res  = await fetch(`${BASE_ATT}/get_attendance.php`);
+      const json = await res.json();
+      if (json.success) {
+        records = json.data;
+        updateStats();
+        filterTable();
+      } else {
+        console.error('Failed to load:', json.error);
+      }
+    } catch (err) {
+      console.error('Load error:', err);
+    }
+  }
+
+  // ── STATS ──
+  function updateStats() {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRecords = records.filter(r => r.attendance_date === today);
+    document.getElementById('count-present').textContent = todayRecords.filter(r => r.status === 'Present').length;
+    document.getElementById('count-absent').textContent  = todayRecords.filter(r => r.status === 'Absent').length;
+    document.getElementById('count-late').textContent    = todayRecords.filter(r => r.status === 'Late').length;
+    document.getElementById('count-leave').textContent   = todayRecords.filter(r => r.status === 'On Leave').length;
+  }
+
+  // ── RENDER TABLE ──
   function statusClass(s) {
     if (s === 'Present')  return 'present';
     if (s === 'Absent')   return 'absent';
@@ -627,61 +650,86 @@
     return '';
   }
 
-  function updateStats() {
-    const today = records.filter(r => r.date === 'Mar 5, 2026');
-    document.getElementById('count-present').textContent = today.filter(r => r.status === 'Present').length;
-    document.getElementById('count-absent').textContent  = today.filter(r => r.status === 'Absent').length;
-    document.getElementById('count-late').textContent    = today.filter(r => r.status === 'Late').length;
-    document.getElementById('count-leave').textContent   = today.filter(r => r.status === 'On Leave').length;
-  }
+// ── UPDATED formatTime — strip seconds from DB time format ──
+function formatTime(t) {
+    if (!t || t === '00:00:00') return '–';
+    // DB returns "06:03:00", strip seconds
+    const parts = t.substring(0, 5).split(':').map(Number);
+    const h = parts[0], m = parts[1];
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const h12  = h % 12 || 12;
+    return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
 
-  function renderTable(list) {
+
+// ── UPDATED calcHours — handles late_minutes fallback ──
+function calcHours(time_in, time_out, late_minutes) {
+    // if both times exist, calculate normally
+    if (time_in && time_out) {
+        // strip seconds if present (e.g. "06:03:00" → "06:03")
+        const tin  = time_in.substring(0, 5);
+        const tout = time_out.substring(0, 5);
+        const [ih, im] = tin.split(':').map(Number);
+        const [oh, om] = tout.split(':').map(Number);
+        const diff = ((oh * 60 + om) - (ih * 60 + im)) / 60;
+        return diff > 0 ? diff.toFixed(1) + 'h' : '–';
+    }
+    // if only late_minutes is available, show that
+    if (late_minutes && late_minutes > 0) {
+        return late_minutes + ' min late';
+    }
+    return '–';
+}
+
+// ── UPDATED renderTable — use emp_role instead of emp_schedule for Role column ──
+function renderTable(list) {
     const tbody = document.getElementById('att-table-body');
     document.getElementById('record-count').textContent =
-      list.length + ' record' + (list.length !== 1 ? 's' : '');
+        list.length + ' record' + (list.length !== 1 ? 's' : '');
     tbody.innerHTML = list.map(r => {
-      const realIdx = records.indexOf(r);
-      return `
-        <tr>
-          <td class="date-cell">${r.date}</td>
-          <td class="name-cell">${r.name}</td>
-          <td><span class="role-badge">${r.role}</span></td>
-          <td class="shift-cell">${r.shift}</td>
-          <td class="time-cell ${r.timeIn === '–' ? 'dash' : ''}">${r.timeIn}</td>
-          <td class="time-cell ${r.timeOut === '–' ? 'dash' : ''}">${r.timeOut}</td>
-          <td class="hours-cell ${r.hours === '–' ? 'dash' : ''}">${r.hours}</td>
-          <td><span class="status-badge ${statusClass(r.status)}">
-            <span class="status-dot"></span>${r.status}
-          </span></td>
-          <td>
-            <div class="actions">
-              <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
-              <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
-            </div>
-          </td>
-        </tr>`;
+        const realIdx = records.indexOf(r);
+        const timeIn  = formatTime(r.time_in);
+        const timeOut = formatTime(r.time_out);
+        const hours   = calcHours(r.time_in, r.time_out, r.late_minutes); // ← pass late_minutes
+        return `
+            <tr>
+                <td class="date-cell">${r.attendance_date ?? '—'}</td>
+                <td class="name-cell">${r.emp_fname} ${r.emp_lname}</td>
+                <td><span class="role-badge">${r.emp_role ?? '—'}</span></td>
+                <td class="shift-cell">${r.emp_schedule ?? '—'}</td>
+                <td class="time-cell ${!r.time_in ? 'dash' : ''}">${timeIn}</td>
+                <td class="time-cell ${!r.time_out ? 'dash' : ''}">${timeOut}</td>
+                <td class="hours-cell">${hours}</td>
+                <td><span class="status-badge ${statusClass(r.status)}">
+                    <span class="status-dot"></span>${r.status}
+                </span></td>
+                <td>
+                    <div class="actions">
+                        <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
+                        <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
+                    </div>
+                </td>
+            </tr>`;
     }).join('');
-  }
+}
 
+  // ── FILTER ──
   function filterTable() {
     const q  = document.getElementById('search-input').value.toLowerCase();
     const df = document.getElementById('date-filter').value;
     const sf = document.getElementById('status-filter').value;
     const filtered = records.filter(r => {
-      const matchName   = !q  || r.name.toLowerCase().includes(q);
-      const matchStatus = !sf || r.status === sf;
-      let matchDate = true;
-      if (df) {
-        const fd = new Date(df).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
-        matchDate = r.date === fd;
-      }
-      return matchName && matchDate && matchStatus;
+      const name = (r.emp_fname + ' ' + r.emp_lname).toLowerCase();
+      return (!q  || name.includes(q)) &&
+             (!df || r.attendance_date === df) &&
+             (!sf || r.status === sf);
     });
     renderTable(filtered);
   }
 
+  // ── MODAL ──
   function toggleTimePicker() {
-    const s = document.getElementById('m-status').value;
+    const s    = document.getElementById('m-status').value;
     const show = (s === 'Present' || s === 'Late');
     document.getElementById('time-in-group').style.display  = show ? '' : 'none';
     document.getElementById('time-out-group').style.display = show ? '' : 'none';
@@ -703,30 +751,12 @@
   function openEditModal(idx) {
     editIdx = idx;
     const r = records[idx];
-    document.getElementById('modal-title').textContent = 'Edit Attendance';
-
-    // populate employee select
-    const sel = document.getElementById('m-employee');
-    sel.value = r.name;
-
-    // parse & set date
-    const d = new Date(r.date);
-    if (!isNaN(d)) document.getElementById('m-date').value = d.toISOString().split('T')[0];
-
-    document.getElementById('m-shift').value  = r.shift;
-    document.getElementById('m-status').value = r.status;
-
-    // parse times back to HH:MM
-    function to24(t) {
-      if (!t || t === '–') return '';
-      const [time, ampm] = t.split(' ');
-      let [h, m] = time.split(':').map(Number);
-      if (ampm === 'PM' && h !== 12) h += 12;
-      if (ampm === 'AM' && h === 12) h = 0;
-      return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
-    }
-    document.getElementById('m-time-in').value  = to24(r.timeIn);
-    document.getElementById('m-time-out').value = to24(r.timeOut);
+    document.getElementById('modal-title').textContent  = 'Edit Attendance';
+    document.getElementById('m-employee').value = r.emp_id;
+    document.getElementById('m-date').value     = r.attendance_date ?? '';
+    document.getElementById('m-status').value   = r.status;
+    document.getElementById('m-time-in').value  = r.time_in  ?? '';
+    document.getElementById('m-time-out').value = r.time_out ?? '';
     toggleTimePicker();
     document.getElementById('log-modal').classList.add('open');
   }
@@ -736,61 +766,48 @@
     editIdx = null;
   }
 
-  function saveRecord() {
-    const empName = document.getElementById('m-employee').value;
-    const rawDate = document.getElementById('m-date').value;
-    const shift   = document.getElementById('m-shift').value;
-    const status  = document.getElementById('m-status').value;
-    const rawIn   = document.getElementById('m-time-in').value;
-    const rawOut  = document.getElementById('m-time-out').value;
+  // ── SAVE ──
+  async function saveRecord() {
+    const emp_id   = document.getElementById('m-employee').value;
+    const rawDate  = document.getElementById('m-date').value;
+    const status   = document.getElementById('m-status').value;
+    const time_in  = document.getElementById('m-time-in').value  || null;
+    const time_out = document.getElementById('m-time-out').value || null;
 
-    if (!empName) { alert('Please select an employee.'); return; }
+    if (!emp_id)  { alert('Please select an employee.'); return; }
     if (!rawDate) { alert('Please select a date.'); return; }
 
-    const dateStr = new Date(rawDate).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
-
-    function to12(t) {
-      if (!t) return '–';
-      let [h, m] = t.split(':').map(Number);
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12 || 12;
-      return `${h}:${String(m).padStart(2,'0')} ${ampm}`;
-    }
-
-    const showTime = (status === 'Present' || status === 'Late');
-    const timeIn   = showTime && rawIn  ? to12(rawIn)  : '–';
-    const timeOut  = showTime && rawOut ? to12(rawOut) : '–';
-
-    let hours = '–';
-    if (showTime && rawIn && rawOut) {
-      const [ih, im] = rawIn.split(':').map(Number);
-      const [oh, om] = rawOut.split(':').map(Number);
-      const diff = ((oh * 60 + om) - (ih * 60 + im)) / 60;
-      if (diff > 0) hours = diff.toFixed(1) + 'h';
-    }
-
-    const rec = {
-      date:    dateStr,
-      name:    empName,
-      role:    roleMap[empName] || '–',
-      shift,
-      timeIn,
-      timeOut,
-      hours,
+    const payload = {
+      emp_id,
+      attendance_date: rawDate,
       status,
+      time_in:  (status === 'Present' || status === 'Late') ? time_in  : null,
+      time_out: (status === 'Present' || status === 'Late') ? time_out : null,
     };
 
-    if (editIdx === null) {
-      records.unshift(rec);
-    } else {
-      records[editIdx] = rec;
-    }
+    const isEdit = editIdx !== null;
+    if (isEdit) payload.attendance_id = records[editIdx].attendance_id;
 
-    closeLogModal();
-    updateStats();
-    filterTable();
+    try {
+      const res  = await fetch(`${BASE_ATT}/${isEdit ? 'update_attendance' : 'add_attendance'}.php`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload),
+      });
+      const json = await res.json();
+      if (json.success) {
+        closeLogModal();
+        loadAttendance();
+      } else {
+        alert('Error: ' + json.error);
+      }
+    } catch (err) {
+      console.error('Save error:', err);
+      alert('Something went wrong. Check the console.');
+    }
   }
 
+  // ── DELETE ──
   function openDelModal(idx) {
     deleteIdx = idx;
     document.getElementById('del-modal').classList.add('open');
@@ -798,29 +815,52 @@
   function closeDelModal() {
     document.getElementById('del-modal').classList.remove('open');
   }
-  function confirmDelete() {
-    if (deleteIdx !== null) records.splice(deleteIdx, 1);
-    closeDelModal();
-    updateStats();
-    filterTable();
+  async function confirmDelete() {
+    if (deleteIdx === null) return;
+    try {
+      const res  = await fetch(`${BASE_ATT}/delete_attendance.php`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ attendance_id: records[deleteIdx].attendance_id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        closeDelModal();
+        loadAttendance();
+      } else {
+        alert('Error: ' + json.error);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+    }
   }
 
+  // ── EXPORT CSV ──
   function exportCSV() {
-    const headers = ['Date','Name','Role','Shift','Time In','Time Out','Hours','Status'];
-    const rows = records.map(r => [r.date, r.name, r.role, r.shift, r.timeIn, r.timeOut, r.hours, r.status]);
+    const headers = ['Date','Name','Schedule','Time In','Time Out','Hours','Status'];
+    const rows = records.map(r => [
+      r.attendance_date,
+      r.emp_fname + ' ' + r.emp_lname,
+      r.emp_schedule,
+      formatTime(r.time_in),
+      formatTime(r.time_out),
+      calcHours(r.time_in, r.time_out),
+      r.status
+    ]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-    const a = document.createElement('a');
-    a.href = 'data:text/csv,' + encodeURIComponent(csv);
+    const a   = document.createElement('a');
+    a.href    = 'data:text/csv,' + encodeURIComponent(csv);
     a.download = 'attendance.csv';
     a.click();
   }
 
-  // close on overlay click
+  // close modals on overlay click
   document.getElementById('log-modal').addEventListener('click', function(e) { if(e.target===this) closeLogModal(); });
   document.getElementById('del-modal').addEventListener('click', function(e) { if(e.target===this) closeDelModal(); });
 
-  updateStats();
-  renderTable(records);
+  // ── INIT ──
+  loadEmployeeDropdown();
+  loadAttendance();
 </script>
 </body>
 </html>
