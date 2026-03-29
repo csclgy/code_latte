@@ -1,5 +1,7 @@
 <!-- <?php
 echo "<h1>HR System is running!</h1>";
+$required_page = 'hr_dashboard';
+require_once '../src/api/session_guard.php';
 ?> -->
 <!DOCTYPE html>
 <html lang="en">
@@ -287,13 +289,13 @@ echo "<h1>HR System is running!</h1>";
     </a>
   </nav>
 
-  <div class="user-block">
-    <div class="avatar">A</div>
-    <div class="user-info">
-      <div class="uname">Admin</div>
-      <div class="urole">Store Manager</div>
-    </div>
+<div class="user-block">
+  <div class="avatar"><?= strtoupper(substr($_SESSION['user_name'], 0, 1)); ?></div>
+  <div class="user-info">
+    <div class="uname"><?= htmlspecialchars($_SESSION['user_name']); ?></div>
+    <div class="urole"><?= htmlspecialchars($_SESSION['user_access']); ?></div>
   </div>
+</div>
 </aside>
 
 <!-- MAIN -->
