@@ -1,3 +1,7 @@
+<?php
+session_start();
+require_once '../src/config/db.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,8 +21,9 @@
       --muted:    #8a7f6e;
       --accent:   #5c4a1e;
       --gold:     #c49a2b;
-      --paid:     #3d7a4e;
+      --sent:     #4a7c9b;
       --pending:  #c4842b;
+      --approved: #3d7a4e;
       --deduct:   #b84040;
       --radius:   14px;
       --shadow:   0 2px 12px rgba(80,60,20,.08);
@@ -133,7 +138,7 @@
     .stat-card .value { font-family: 'DM Serif Display', serif; font-size: 28px; line-height:1; margin-bottom: 5px; }
     .stat-card .desc  { font-size: 12px; color: var(--muted); }
     .stat-card.total .value  { color: var(--text); }
-    .stat-card.paid .value   { color: var(--paid); }
+    .stat-card.sent .value   { color: var(--sent); }
     .stat-card.pending .value { color: var(--pending); }
 
     /* ── PAY PERIOD PANEL ── */
@@ -192,15 +197,15 @@
     .records-count {
       font-size: 12px; color: var(--muted); font-weight: 400;
     }
-    .btn-mark-all {
+    .btn-send-all {
       padding: 8px 16px; border-radius: 8px; border: none;
-      background: var(--paid);
+      background: var(--sent);
       font-family: 'DM Sans', sans-serif;
       font-size: 12px; font-weight: 600;
       color: #fff; cursor: pointer;
       transition: background .15s;
     }
-    .btn-mark-all:hover { background: #2d5e3a; }
+    .btn-send-all:hover { background: #3a5f7a; }
 
     /* ── TABLE ── */
     .table-scroll {
@@ -211,7 +216,7 @@
     .table-scroll::-webkit-scrollbar { height: 5px; }
     .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
 
-    table { width: 100%; border-collapse: collapse; min-width: 860px; }
+    table { width: 100%; border-collapse: collapse; min-width: 700px; }
     thead th {
       text-align: left; font-size: 11px; font-weight: 600;
       letter-spacing:.06em; color: var(--muted); text-transform: uppercase;
@@ -224,31 +229,53 @@
 
     .id-cell     { color: var(--muted); font-size: 12px; font-weight: 500; }
     .name-cell   { font-weight: 500; }
-    .period-cell { color: var(--muted); font-size: 12px; }
-    .paydate-cell{ font-size: 13px; }
-    .money       { font-size: 13px; }
-    .deduct      { color: var(--deduct); font-weight: 500; }
-    .net         { font-weight: 600; }
+    .money       { font-size: 13px; font-weight: 600; }
+    .count-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--sidebar); color: var(--text);
+      padding: 2px 8px; border-radius: 12px;
+      font-size: 11px; font-weight: 600; margin-left: 6px;
+    }
 
+    /* Status badges for summary - COLORED LIKE YOUR EXAMPLE */
+    .status-summary {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
     .status-badge {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 3px 10px; border-radius: 20px;
-      font-size: 12px; font-weight: 600;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
     }
-    .status-badge.paid    { background: #e8f5ec; color: var(--paid); }
-    .status-badge.pending { background: #fef3e2; color: var(--pending); }
-    .status-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .status-badge.sent     { background: #e8f0f5; color: var(--sent); }
+    .status-badge.pending  { background: #fef3e2; color: var(--pending); }
+    .status-badge.approved { background: #e8f5ec; color: var(--approved); }
+    .status-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
 
-    .btn-mark-paid {
+    .btn-view {
+      padding: 6px 14px; border-radius: 6px; border: none;
+      background: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px; font-weight: 600;
+      color: #fff; cursor: pointer;
+      transition: background .12s;
+    }
+    .btn-view:hover { background: #3e3010; }
+
+    .btn-send-finance {
       padding: 5px 12px; border-radius: 6px; border: none;
-      background: var(--paid);
+      background: var(--sent);
       font-family: 'DM Sans', sans-serif;
       font-size: 11px; font-weight: 600;
       color: #fff; cursor: pointer;
       transition: background .12s;
       white-space: nowrap;
     }
-    .btn-mark-paid:hover { background: #2d5e3a; }
+    .btn-send-finance:hover { background: #3a5f7a; }
+    .btn-send-finance:disabled {
+      background: var(--border);
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
 
     .actions { display: flex; gap: 6px; align-items: center; }
     .btn-edit {
@@ -268,11 +295,12 @@
     }
     .btn-delete:hover { background: #fceaea; }
 
-    /* ── MODAL ── */
+    /* ── MODALS ── */
     .modal-overlay {
       display: none; position: fixed; inset: 0;
       background: rgba(44,36,22,.45);
       z-index: 100; align-items: center; justify-content: center;
+      padding: 20px;
     }
     .modal-overlay.open { display: flex; }
 
@@ -283,10 +311,12 @@
 
     .modal {
       background: #fff; border-radius: var(--radius);
-      padding: 28px 32px; width: 500px;
+      padding: 28px 32px; width: 600px; max-height: 80vh;
       box-shadow: 0 8px 40px rgba(44,36,22,.18);
       animation: fadeUp .22s ease;
+      overflow-y: auto;
     }
+    .modal.wide { width: 800px; }
     .modal-top {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 22px;
@@ -373,6 +403,58 @@
       font-size: 13px; font-weight: 600;
       color: #fff; cursor: pointer;
     }
+
+    /* View Details Modal */
+    .details-list {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .detail-item {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 16px;
+    }
+    .detail-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px;
+    }
+    .detail-period {
+      font-size: 14px; font-weight: 600; color: var(--text);
+    }
+    .detail-status {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .detail-status.pending { background: #fef3e2; color: var(--pending); }
+    .detail-status.sent { background: #e8f0f5; color: var(--sent); }
+    .detail-status.approved { background: #e8f5ec; color: var(--approved); }
+    .detail-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .detail-cell {
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .detail-cell label {
+      font-size: 10px; font-weight: 600; letter-spacing:.05em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .detail-cell value {
+      font-size: 13px; font-weight: 500; color: var(--text);
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--accent); color: #fff;
+      padding: 12px 20px; border-radius: 8px;
+      box-shadow: var(--shadow);
+      font-size: 13px; font-weight: 500;
+      z-index: 200;
+      opacity: 0; transform: translateY(20px);
+      transition: opacity .3s, transform .3s;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.error { background: var(--deduct); }
+    .toast.success { background: var(--approved); }
   </style>
 </head>
 <body>
@@ -380,7 +462,7 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="logo">
-    <div class="logo-icon">{}&#x2609;</div>
+    <div class="logo-icon">☕</div>
     <div class="logo-text">
       <div class="name">Code Latte</div>
       <div class="sub">HR System</div>
@@ -423,7 +505,7 @@
 
   <!-- SECTION HEADER -->
   <div class="section-header">
-    <span class="section-title">Payroll</span>
+    <span class="section-title">Employee Payroll Summary</span>
     <div class="header-actions">
       <button class="btn-export" onclick="exportCSV()">Export</button>
       <button class="btn-add" onclick="openAddModal()">+ Add Payroll</button>
@@ -433,19 +515,19 @@
   <!-- STAT CARDS -->
   <div class="stats">
     <div class="stat-card total">
-      <div class="label">Total Net Salary</div>
+      <div class="label">Total Net Salary (All)</div>
       <div class="value" id="stat-total">₱0.00</div>
-      <div class="desc" id="stat-period">Mar 1, 2026 – Mar 15, 2026</div>
+      <div class="desc" id="stat-count">0 employees</div>
     </div>
-    <div class="stat-card paid">
-      <div class="label">Paid</div>
-      <div class="value" id="stat-paid">₱0.00</div>
-      <div class="desc" id="stat-paid-count">0 employees</div>
+    <div class="stat-card sent">
+      <div class="label">Sent to Finance</div>
+      <div class="value" id="stat-sent">₱0.00</div>
+      <div class="desc" id="stat-sent-count">0 records</div>
     </div>
     <div class="stat-card pending">
-      <div class="label">Pending</div>
+      <div class="label">Pending Submission</div>
       <div class="value" id="stat-pending">₱0.00</div>
-      <div class="desc" id="stat-pending-count">0 employees</div>
+      <div class="desc" id="stat-pending-count">0 records</div>
     </div>
   </div>
 
@@ -453,28 +535,31 @@
   <div class="period-panel">
     <div class="period-label">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Set Active Pay Period
-      <span class="hint">New entries will use these dates automatically</span>
+      Filter by Pay Period
+      <span class="hint">Filter payroll records by date range</span>
     </div>
     <div class="period-grid">
       <div class="period-group">
         <label>Period Start</label>
-        <input type="date" id="period-start" value="2026-03-01" onchange="updatePeriodStats()"/>
+        <input type="date" id="filter-start" onchange="loadPayrolls()"/>
       </div>
       <div class="period-group">
         <label>Period End</label>
-        <input type="date" id="period-end" value="2026-03-15" onchange="updatePeriodStats()"/>
+        <input type="date" id="filter-end" onchange="loadPayrolls()"/>
       </div>
       <div class="period-group">
-        <label>Pay Date</label>
-        <input type="date" id="pay-date" value="2026-03-16"/>
-      </div>
-      <div class="period-group">
-        <label>Filter</label>
-        <select id="status-filter" onchange="renderTable()">
-          <option value="All">All</option>
-          <option value="Paid">Paid</option>
+        <label>Status</label>
+        <select id="filter-status" onchange="loadPayrolls()">
+          <option value="All">All Status</option>
           <option value="Pending">Pending</option>
+          <option value="Sent">Sent to Finance</option>
+          <option value="Approved">Approved</option>
+        </select>
+      </div>
+      <div class="period-group">
+        <label>Employee</label>
+        <select id="filter-employee" onchange="loadPayrolls()">
+          <option value="All">All Employees</option>
         </select>
       </div>
     </div>
@@ -484,29 +569,27 @@
   <div class="records-panel">
     <div class="records-header">
       <div class="records-title">
-        Payroll Records
-        <span class="records-count" id="records-count">0 records</span>
+        Employee Payroll Summary
+        <span class="records-count" id="records-count">0 employees</span>
       </div>
-      <button class="btn-mark-all" onclick="markAllPaid()">✓ Mark All Pending as Paid</button>
+      <button class="btn-send-all" onclick="sendAllToFinance()">Send All Pending to Finance</button>
     </div>
     <div class="table-scroll">
       <table>
         <thead>
           <tr>
-            <th>ID</th>
             <th>Employee</th>
-            <th>Period</th>
-            <th>Pay Date</th>
-            <th>Base</th>
-            <th>Bonus</th>
-            <th>OT</th>
-            <th>Deductions</th>
-            <th>Net Salary</th>
-            <th>Status</th>
+            <th>Department</th>
+            <th>Position</th>
+            <th>Payroll Count</th>
+            <th>Total Net Salary</th>
+            <th>Status Summary</th>
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody id="pay-table-body"></tbody>
+        <tbody id="pay-table-body">
+          <tr><td colspan="7" style="text-align:center; color:var(--muted); padding:40px;">Loading...</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -520,31 +603,30 @@
       <button class="btn-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-grid">
-      <div class="modal-group">
-        <label>Employee</label>
-        <select id="m-employee">
-          <option value="">Select employee…</option>
-          <option>Juan Reyes</option>
-          <option>Maria Cruz</option>
-          <option>Ramon Lopez</option>
-          <option>Ana Santos</option>
-          <option>Karl Dela Cruz</option>
+      <div class="modal-group" style="grid-column:1/-1;">
+        <label>Employee *</label>
+        <select id="m-employee" onchange="loadEmployeeInfo()">
+          <option value="">Select employee...</option>
         </select>
       </div>
       <div class="modal-group">
-        <label>Pay Date</label>
-        <input type="date" id="m-paydate"/>
+        <label>Department</label>
+        <input type="text" id="m-dept" readonly style="background:var(--sidebar);"/>
       </div>
       <div class="modal-group">
-        <label>Period Start</label>
+        <label>Position</label>
+        <input type="text" id="m-position" readonly style="background:var(--sidebar);"/>
+      </div>
+      <div class="modal-group">
+        <label>Period Start *</label>
         <input type="date" id="m-period-start"/>
       </div>
       <div class="modal-group">
-        <label>Period End</label>
+        <label>Period End *</label>
         <input type="date" id="m-period-end"/>
       </div>
       <div class="modal-group">
-        <label>Base Salary (₱)</label>
+        <label>Base Salary (₱) *</label>
         <input type="number" id="m-base" placeholder="0" min="0" oninput="calcNet()"/>
       </div>
       <div class="modal-group">
@@ -559,22 +641,32 @@
         <label>Deductions (₱)</label>
         <input type="number" id="m-deductions" placeholder="0" min="0" oninput="calcNet()"/>
       </div>
+      <div class="modal-group" style="grid-column:1/-1;">
+        <label>Deductions Label</label>
+        <input type="text" id="m-deductions-label" placeholder="e.g., Tax, SSS, PhilHealth"/>
+      </div>
       <!-- Net Preview -->
       <div class="net-preview">
         <span class="net-label">Net Salary</span>
         <span class="net-value" id="m-net-preview">₱0.00</span>
       </div>
-      <div class="modal-group" style="grid-column:1/-1;">
-        <label>Status</label>
-        <select id="m-status">
-          <option>Pending</option>
-          <option>Paid</option>
-        </select>
-      </div>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
-      <button class="btn-save-modal" onclick="saveRecord()">Save</button>
+      <button class="btn-save-modal" onclick="saveRecord()">Save Record</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW DETAILS MODAL -->
+<div class="modal-overlay" id="view-modal">
+  <div class="modal wide">
+    <div class="modal-top">
+      <h2 id="view-modal-title">Payroll Details</h2>
+      <button class="btn-close" onclick="closeViewModal()">✕</button>
+    </div>
+    <div id="view-details-content">
+      <!-- Content loaded dynamically -->
     </div>
   </div>
 </div>
@@ -583,9 +675,9 @@
 <div class="modal-overlay" id="del-modal">
   <div class="modal confirm-modal">
     <div class="modal-top" style="justify-content:center; margin-bottom:10px;">
-      <h2>Delete Record?</h2>
+      <h2>Delete Payroll Record?</h2>
     </div>
-    <p>This action cannot be undone.</p>
+    <p>This action cannot be undone. The record will be permanently removed.</p>
     <div class="modal-actions" style="justify-content:center;">
       <button class="btn-cancel-modal" onclick="closeDelModal()">Cancel</button>
       <button class="btn-confirm-delete" onclick="confirmDelete()">Yes, Delete</button>
@@ -593,189 +685,673 @@
   </div>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <script>
-  let records = [
-    { id:'#001', name:'Juan Reyes',  period:'Mar 1, 2026 – Mar 15, 2026', payDate:'Mar 16, 2026', base:9000,  bonus:500,  ot:1200, deductions:300, net:10400, status:'Paid'    },
-    { id:'#002', name:'Maria Cruz',  period:'Mar 1, 2026 – Mar 15, 2026', payDate:'Mar 16, 2026', base:8500,  bonus:0,    ot:0,    deductions:400, net:8100,  status:'Paid'    },
-    { id:'#003', name:'Ramon Lopez', period:'Mar 1, 2026 – Mar 15, 2026', payDate:'Mar 16, 2026', base:9000,  bonus:0,    ot:800,  deductions:900, net:8900,  status:'Pending' },
-    { id:'#004', name:'Ana Santos',  period:'Mar 1, 2026 – Mar 15, 2026', payDate:'Mar 16, 2026', base:12000, bonus:1000, ot:1500, deductions:200, net:14300, status:'Pending' },
+  /*****************************************************************
+   * DUMMY DATA - START
+   * Remove this section when connecting to real database
+   * This provides sample data for testing the UI
+   *****************************************************************/
+  const DUMMY_EMPLOYEES = [
+    { emp_id: 1, full_name: 'Juan Reyes', dept_name: 'Operations', pos_name: 'Barista' },
+    { emp_id: 2, full_name: 'Maria Cruz', dept_name: 'Operations', pos_name: 'Senior Barista' },
+    { emp_id: 3, full_name: 'Ramon Lopez', dept_name: 'Kitchen', pos_name: 'Cook' },
+    { emp_id: 4, full_name: 'Ana Santos', dept_name: 'Management', pos_name: 'Supervisor' },
+    { emp_id: 5, full_name: 'Karl Dela Cruz', dept_name: 'Operations', pos_name: 'Cashier' }
   ];
 
-  let editIdx   = null;
-  let deleteIdx = null;
+  const DUMMY_PAYROLLS = [
+    { payroll_id: 1, emp_id: 1, emp_fname: 'Juan', emp_lname: 'Reyes', dept_name: 'Operations', pos_name: 'Barista',
+      payperiod_start: '2026-03-01', payperiod_end: '2026-03-15', base_salary: 9000, bonus: 500, overtime: 1200, 
+      deduction_total: 300, deductions_label: 'SSS, PhilHealth', net_salary: 10400, approval_status: 'Approved' },
+    { payroll_id: 2, emp_id: 1, emp_fname: 'Juan', emp_lname: 'Reyes', dept_name: 'Operations', pos_name: 'Barista',
+      payperiod_start: '2026-03-16', payperiod_end: '2026-03-31', base_salary: 9000, bonus: 0, overtime: 800, 
+      deduction_total: 300, deductions_label: 'SSS, PhilHealth', net_salary: 9500, approval_status: 'Pending' },
+    { payroll_id: 3, emp_id: 2, emp_fname: 'Maria', emp_lname: 'Cruz', dept_name: 'Operations', pos_name: 'Senior Barista',
+      payperiod_start: '2026-03-01', payperiod_end: '2026-03-15', base_salary: 12000, bonus: 1000, overtime: 0, 
+      deduction_total: 500, deductions_label: 'Tax, SSS', net_salary: 12500, approval_status: 'Sent' },
+    { payroll_id: 4, emp_id: 3, emp_fname: 'Ramon', emp_lname: 'Lopez', dept_name: 'Kitchen', pos_name: 'Cook',
+      payperiod_start: '2026-03-01', payperiod_end: '2026-03-15', base_salary: 8500, bonus: 0, overtime: 1500, 
+      deduction_total: 400, deductions_label: 'SSS, Pag-IBIG', net_salary: 9600, approval_status: 'Pending' },
+    { payroll_id: 5, emp_id: 4, emp_fname: 'Ana', emp_lname: 'Santos', dept_name: 'Management', pos_name: 'Supervisor',
+      payperiod_start: '2026-03-01', payperiod_end: '2026-03-15', base_salary: 18000, bonus: 2000, overtime: 0, 
+      deduction_total: 800, deductions_label: 'Tax, SSS, PhilHealth', net_salary: 19200, approval_status: 'Approved' }
+  ];
+  /*****************************************************************
+   * DUMMY DATA - END
+   *****************************************************************/
 
-  function fmt(n) { return '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  let records = [];
+  let employees = [];
+  let editId = null;
+  let deleteId = null;
+  let viewEmpId = null;
 
-  function updateStats() {
-    const total   = records.reduce((s,r) => s + r.net, 0);
-    const paid    = records.filter(r => r.status === 'Paid');
-    const pending = records.filter(r => r.status === 'Pending');
-    document.getElementById('stat-total').textContent   = fmt(total);
-    document.getElementById('stat-paid').textContent    = fmt(paid.reduce((s,r) => s + r.net, 0));
-    document.getElementById('stat-pending').textContent = fmt(pending.reduce((s,r) => s + r.net, 0));
-    document.getElementById('stat-paid-count').textContent    = paid.length + ' employee' + (paid.length !== 1 ? 's' : '');
-    document.getElementById('stat-pending-count').textContent = pending.length + ' employee' + (pending.length !== 1 ? 's' : '');
+  // Format currency
+  function fmt(n) { 
+    return '₱' + Number(n).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2}); 
   }
 
-  function renderTable() {
-    const filter = document.getElementById('status-filter').value;
-    const list   = filter === 'All' ? records : records.filter(r => r.status === filter);
-    document.getElementById('records-count').textContent = list.length + ' record' + (list.length !== 1 ? 's' : '');
+  // Show toast
+  function showToast(msg, type='success') {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.className = 'toast show ' + type;
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Load employees dropdown
+  async function loadEmployees() {
+    try {
+      // DUMMY DATA MODE: Use dummy data instead of API
+      // REMOVE THIS BLOCK when using real API
+      employees = DUMMY_EMPLOYEES;
+      populateEmployeeSelects();
+      return;
+      // END DUMMY DATA MODE
+
+      // REAL API MODE: Uncomment when connecting to backend
+      /*
+      const res = await fetch('../src/api/hr/payroll/get_employees_dropdown.php');
+      const data = await res.json();
+      if (data.success) {
+        employees = data.employees;
+        populateEmployeeSelects();
+      }
+      */
+    } catch (err) {
+      console.error('Error loading employees:', err);
+    }
+  }
+
+  function populateEmployeeSelects() {
+    const selects = [document.getElementById('m-employee'), document.getElementById('filter-employee')];
+    selects.forEach(select => {
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">Select employee...</option>';
+      if (select.id === 'filter-employee') {
+        select.innerHTML = '<option value="All">All Employees</option>';
+      }
+      employees.forEach(emp => {
+        const opt = document.createElement('option');
+        opt.value = emp.emp_id;
+        opt.textContent = emp.full_name;
+        select.appendChild(opt);
+      });
+      select.value = currentVal;
+    });
+  }
+
+  // Load employee info when selected
+  function loadEmployeeInfo() {
+    const empId = document.getElementById('m-employee').value;
+    const emp = employees.find(e => e.emp_id == empId);
+    if (emp) {
+      document.getElementById('m-dept').value = emp.dept_name || 'N/A';
+      document.getElementById('m-position').value = emp.pos_name || 'N/A';
+    } else {
+      document.getElementById('m-dept').value = '';
+      document.getElementById('m-position').value = '';
+    }
+  }
+
+  // Load payroll records
+  async function loadPayrolls() {
+    try {
+      // DUMMY DATA MODE: Use dummy data instead of API
+      // REMOVE THIS BLOCK when using real API
+      records = DUMMY_PAYROLLS;
+      applyFilters();
+      return;
+      // END DUMMY DATA MODE
+
+      // REAL API MODE: Uncomment when connecting to backend
+      /*
+      const params = new URLSearchParams();
+      const start = document.getElementById('filter-start').value;
+      const end = document.getElementById('filter-end').value;
+      const status = document.getElementById('filter-status').value;
+      const emp = document.getElementById('filter-employee').value;
+      
+      if (start) params.append('start', start);
+      if (end) params.append('end', end);
+      if (status && status !== 'All') params.append('status', status);
+      if (emp && emp !== 'All') params.append('emp_id', emp);
+
+      const res = await fetch('../src/api/hr/payroll/get_payrolls.php?' + params);
+      const data = await res.json();
+      
+      if (data.success) {
+        records = data.payrolls;
+        applyFilters();
+      } else {
+        showToast(data.error || 'Failed to load payrolls', 'error');
+      }
+      */
+    } catch (err) {
+      showToast('Error loading payrolls', 'error');
+      console.error(err);
+    }
+  }
+
+  // Apply filters and group by employee
+  function applyFilters() {
+    const statusFilter = document.getElementById('filter-status').value;
+    const empFilter = document.getElementById('filter-employee').value;
+    const startFilter = document.getElementById('filter-start').value;
+    const endFilter = document.getElementById('filter-end').value;
+
+    let filtered = records.filter(r => {
+      if (statusFilter !== 'All' && r.approval_status !== statusFilter) return false;
+      if (empFilter !== 'All' && r.emp_id != empFilter) return false;
+      if (startFilter && r.payperiod_start < startFilter) return false;
+      if (endFilter && r.payperiod_end > endFilter) return false;
+      return true;
+    });
+
+    // Group by employee
+    const grouped = {};
+    filtered.forEach(r => {
+      if (!grouped[r.emp_id]) {
+        grouped[r.emp_id] = {
+          emp_id: r.emp_id,
+          emp_fname: r.emp_fname,
+          emp_lname: r.emp_lname,
+          dept_name: r.dept_name,
+          pos_name: r.pos_name,
+          payrolls: [],
+          total_net: 0,
+          pending_count: 0,
+          sent_count: 0,
+          approved_count: 0
+        };
+      }
+      grouped[r.emp_id].payrolls.push(r);
+      grouped[r.emp_id].total_net += parseFloat(r.net_salary);
+      if (r.approval_status === 'Pending') grouped[r.emp_id].pending_count++;
+      else if (r.approval_status === 'Sent') grouped[r.emp_id].sent_count++;
+      else if (r.approval_status === 'Approved') grouped[r.emp_id].approved_count++;
+    });
+
+    const groupedArray = Object.values(grouped);
+    updateStats(groupedArray, filtered);
+    renderTable(groupedArray);
+  }
+
+  // Update statistics
+  function updateStats(grouped, allRecords) {
+    const total = allRecords.reduce((s, r) => s + parseFloat(r.net_salary), 0);
+    const sent = allRecords.filter(r => r.approval_status === 'Sent' || r.approval_status === 'Approved');
+    const pending = allRecords.filter(r => r.approval_status === 'Pending');
+    
+    document.getElementById('stat-total').textContent = fmt(total);
+    document.getElementById('stat-sent').textContent = fmt(sent.reduce((s, r) => s + parseFloat(r.net_salary), 0));
+    document.getElementById('stat-pending').textContent = fmt(pending.reduce((s, r) => s + parseFloat(r.net_salary), 0));
+    
+    document.getElementById('stat-count').textContent = grouped.length + ' employee' + (grouped.length !== 1 ? 's' : '');
+    document.getElementById('stat-sent-count').textContent = sent.length + ' record' + (sent.length !== 1 ? 's' : '');
+    document.getElementById('stat-pending-count').textContent = pending.length + ' record' + (pending.length !== 1 ? 's' : '');
+  }
+
+    // Render table with COLORED status badges
+  function renderTable(grouped) {
     const tbody = document.getElementById('pay-table-body');
-    tbody.innerHTML = list.map(r => {
-      const realIdx = records.indexOf(r);
-      const isPaid  = r.status === 'Paid';
+    if (grouped.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:40px;">No payroll records found</td></tr>';
+      document.getElementById('records-count').textContent = '0 employees';
+      return;
+    }
+
+    document.getElementById('records-count').textContent = grouped.length + ' employee' + (grouped.length !== 1 ? 's' : '');
+    
+    tbody.innerHTML = grouped.map(g => {
+      // Build COLORED status badges like your example
+      let statusBadges = [];
+      if (g.pending_count > 0) {
+        statusBadges.push(`<span class="status-badge pending"><span class="status-dot"></span>${g.pending_count} Pending</span>`);
+      }
+      if (g.sent_count > 0) {
+        statusBadges.push(`<span class="status-badge sent"><span class="status-dot"></span>${g.sent_count} Sent</span>`);
+      }
+      if (g.approved_count > 0) {
+        statusBadges.push(`<span class="status-badge approved"><span class="status-dot"></span>${g.approved_count} Approved</span>`);
+      }
+      
+      const hasPending = g.pending_count > 0;
+
       return `
-        <tr>
-          <td class="id-cell">${r.id}</td>
-          <td class="name-cell">${r.name}</td>
-          <td class="period-cell">${r.period}</td>
-          <td class="paydate-cell">${r.payDate}</td>
-          <td class="money">${fmt(r.base)}</td>
-          <td class="money">${fmt(r.bonus)}</td>
-          <td class="money">${fmt(r.ot)}</td>
-          <td class="money deduct">${fmt(r.deductions)}</td>
-          <td class="money net">${fmt(r.net)}</td>
+        <tr data-id="${g.emp_id}">
+          <td class="name-cell">${g.emp_fname} ${g.emp_lname}</td>
+          <td>${g.dept_name || 'N/A'}</td>
+          <td>${g.pos_name || 'N/A'}</td>
+          <td><span class="count-badge">${g.payrolls.length} payrolls</span></td>
+          <td class="money">${fmt(g.total_net)}</td>
           <td>
-            ${isPaid
-              ? `<span class="status-badge paid"><span class="status-dot"></span>Paid</span>`
-              : `<button class="btn-mark-paid" onclick="markPaid(${realIdx})">✓ Mark Paid</button>`
-            }
+            <div class="status-summary">
+              ${statusBadges.join('') || '<span style="color: var(--muted);">N/A</span>'}
+            </div>
           </td>
           <td>
             <div class="actions">
-              <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
-              <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
+              <button class="btn-view" onclick="viewDetails(${g.emp_id})">View Details</button>
+              ${hasPending ? `<button class="btn-send-finance" onclick="sendEmployeeToFinance(${g.emp_id})">Send to Finance</button>` : ''}
             </div>
           </td>
         </tr>`;
     }).join('');
   }
 
-  function markPaid(idx) {
-    records[idx].status = 'Paid';
-    updateStats(); renderTable();
+    // View details modal
+  function viewDetails(empId) {
+    const emp = employees.find(e => e.emp_id == empId);
+    const empPayrolls = records.filter(r => r.emp_id == empId);
+    
+    if (!emp || empPayrolls.length === 0) return;
+    
+    viewEmpId = empId;
+    document.getElementById('view-modal-title').textContent = `Payroll Details - ${emp.full_name}`;
+    
+    const content = document.getElementById('view-details-content');
+    content.innerHTML = `
+      <div class="details-list">
+        ${empPayrolls.map(p => {
+          let statusClass = p.approval_status.toLowerCase();
+          return `
+          <div class="detail-item">
+            <div class="detail-header">
+              <span class="detail-period">${formatDate(p.payperiod_start)} – ${formatDate(p.payperiod_end)}</span>
+              <span class="detail-status ${statusClass}">${p.approval_status}</span>
+            </div>
+            <div class="detail-grid">
+              <div class="detail-cell">
+                <label>Base Salary</label>
+                <value>${fmt(p.base_salary)}</value>
+              </div>
+              <div class="detail-cell">
+                <label>Bonus</label>
+                <value>${fmt(p.bonus || 0)}</value>
+              </div>
+              <div class="detail-cell">
+                <label>Overtime</label>
+                <value>${fmt(p.overtime || 0)}</value>
+              </div>
+              <div class="detail-cell">
+                <label>Deductions</label>
+                <value class="deduct">${fmt(p.deduction_total || 0)}</value>
+              </div>
+              <div class="detail-cell" style="grid-column: 1 / -1;">
+                <label>Deductions Label</label>
+                <value>${p.deductions_label || 'N/A'}</value>
+              </div>
+              <div class="detail-cell" style="grid-column: 1 / -1; background: var(--sidebar); padding: 8px; border-radius: 6px;">
+                <label>Net Salary</label>
+                <value style="font-weight: 600; font-size: 16px;">${fmt(p.net_salary)}</value>
+              </div>
+            </div>
+            <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
+              ${p.approval_status === 'Pending' ? 
+                `<button class="btn-send-finance" onclick="sendToFinance(${p.payroll_id}); closeViewModal();">Send to Finance</button>
+                 <button class="btn-edit" onclick="openEditFromView(${p.payroll_id})">Edit</button>
+                 <button class="btn-delete" onclick="deleteFromView(${p.payroll_id})">Delete</button>` : 
+                '<span style="color: var(--muted); font-size: 12px;">Sent to Finance - Cannot edit</span>'
+              }
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+    
+    document.getElementById('view-modal').classList.add('open');
   }
 
-  function markAllPaid() {
-    records.forEach(r => { if (r.status === 'Pending') r.status = 'Paid'; });
-    updateStats(); renderTable();
+  function closeViewModal() {
+    document.getElementById('view-modal').classList.remove('open');
+    viewEmpId = null;
   }
 
+  function openEditFromView(payrollId) {
+    closeViewModal();
+    openEditModal(payrollId);
+  }
+
+  function deleteFromView(payrollId) {
+    closeViewModal();
+    openDelModal(payrollId);
+  }
+
+  // Format date
+  function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr);
+    return isNaN(d) ? dateStr : d.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
+  }
+
+  // Calculate net salary
   function calcNet() {
     const base = parseFloat(document.getElementById('m-base').value) || 0;
-    const bonus= parseFloat(document.getElementById('m-bonus').value) || 0;
-    const ot   = parseFloat(document.getElementById('m-ot').value) || 0;
-    const ded  = parseFloat(document.getElementById('m-deductions').value) || 0;
-    const net  = base + bonus + ot - ded;
+    const bonus = parseFloat(document.getElementById('m-bonus').value) || 0;
+    const ot = parseFloat(document.getElementById('m-ot').value) || 0;
+    const ded = parseFloat(document.getElementById('m-deductions').value) || 0;
+    const net = base + bonus + ot - ded;
     document.getElementById('m-net-preview').textContent = fmt(Math.max(0, net));
   }
 
+  // Open add modal
   function openAddModal() {
-    editIdx = null;
+    editId = null;
     document.getElementById('modal-title').textContent = 'Add Payroll Record';
     document.getElementById('m-employee').value = '';
-    document.getElementById('m-paydate').value  = document.getElementById('pay-date').value;
-    document.getElementById('m-period-start').value = document.getElementById('period-start').value;
-    document.getElementById('m-period-end').value   = document.getElementById('period-end').value;
-    ['m-base','m-bonus','m-ot','m-deductions'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('m-status').value = 'Pending';
+    document.getElementById('m-dept').value = '';
+    document.getElementById('m-position').value = '';
+    document.getElementById('m-period-start').value = '';
+    document.getElementById('m-period-end').value = '';
+    document.getElementById('m-base').value = '';
+    document.getElementById('m-bonus').value = '';
+    document.getElementById('m-ot').value = '';
+    document.getElementById('m-deductions').value = '';
+    document.getElementById('m-deductions-label').value = '';
     document.getElementById('m-net-preview').textContent = '₱0.00';
     document.getElementById('pay-modal').classList.add('open');
   }
 
-  function openEditModal(idx) {
-    editIdx = idx;
-    const r = records[idx];
+  // Open edit modal
+  function openEditModal(id) {
+    const r = records.find(rec => rec.payroll_id == id);
+    if (!r) return;
+    
+    editId = id;
     document.getElementById('modal-title').textContent = 'Edit Payroll Record';
-    document.getElementById('m-employee').value = r.name;
-    // parse date for input
-    function toInput(s) {
-      const d = new Date(s); return isNaN(d) ? '' : d.toISOString().split('T')[0];
-    }
-    document.getElementById('m-paydate').value = toInput(r.payDate);
-    const [ps, pe] = r.period.split(' – ');
-    document.getElementById('m-period-start').value = toInput(ps);
-    document.getElementById('m-period-end').value   = toInput(pe);
-    document.getElementById('m-base').value       = r.base;
-    document.getElementById('m-bonus').value      = r.bonus;
-    document.getElementById('m-ot').value         = r.ot;
-    document.getElementById('m-deductions').value = r.deductions;
-    document.getElementById('m-status').value     = r.status;
+    document.getElementById('m-employee').value = r.emp_id;
+    document.getElementById('m-dept').value = r.dept_name || 'N/A';
+    document.getElementById('m-position').value = r.pos_name || 'N/A';
+    document.getElementById('m-period-start').value = r.payperiod_start;
+    document.getElementById('m-period-end').value = r.payperiod_end;
+    document.getElementById('m-base').value = r.base_salary;
+    document.getElementById('m-bonus').value = r.bonus || '';
+    document.getElementById('m-ot').value = r.overtime || '';
+    document.getElementById('m-deductions').value = r.deduction_total || '';
+    document.getElementById('m-deductions-label').value = r.deductions_label || '';
     calcNet();
     document.getElementById('pay-modal').classList.add('open');
   }
 
+  // Close modal
   function closeModal() {
     document.getElementById('pay-modal').classList.remove('open');
-    editIdx = null;
+    editId = null;
   }
 
-  function saveRecord() {
-    const name = document.getElementById('m-employee').value;
-    if (!name) { alert('Please select an employee.'); return; }
-    const rawPay = document.getElementById('m-paydate').value;
-    const rawPS  = document.getElementById('m-period-start').value;
-    const rawPE  = document.getElementById('m-period-end').value;
-    const base   = parseFloat(document.getElementById('m-base').value) || 0;
-    const bonus  = parseFloat(document.getElementById('m-bonus').value) || 0;
-    const ot     = parseFloat(document.getElementById('m-ot').value) || 0;
-    const ded    = parseFloat(document.getElementById('m-deductions').value) || 0;
-    const net    = Math.max(0, base + bonus + ot - ded);
-    const status = document.getElementById('m-status').value;
+    // Save record
+  async function saveRecord() {
+    const empId = document.getElementById('m-employee').value;
+    if (!empId) { showToast('Please select an employee', 'error'); return; }
+    
+    const start = document.getElementById('m-period-start').value;
+    const end = document.getElementById('m-period-end').value;
+    if (!start || !end) { showToast('Please set pay period dates', 'error'); return; }
+    
+    const base = parseFloat(document.getElementById('m-base').value) || 0;
+    if (base <= 0) { showToast('Base salary is required', 'error'); return; }
 
-    function fmtDate(s) {
-      const d = new Date(s);
-      return isNaN(d) ? '' : d.toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'});
-    }
-
-    const rec = {
-      id:      editIdx !== null ? records[editIdx].id : '#' + String(records.length + 1).padStart(3,'0'),
-      name,
-      period:  fmtDate(rawPS) + ' – ' + fmtDate(rawPE),
-      payDate: fmtDate(rawPay),
-      base, bonus, ot, deductions: ded, net, status,
+    const data = {
+      emp_id: empId,
+      payperiod_start: start,
+      payperiod_end: end,
+      base_salary: base,
+      bonus: parseFloat(document.getElementById('m-bonus').value) || 0,
+      overtime: parseFloat(document.getElementById('m-ot').value) || 0,
+      deduction_total: parseFloat(document.getElementById('m-deductions').value) || 0,
+      deductions_label: document.getElementById('m-deductions-label').value,
+      net_salary: parseFloat(document.getElementById('m-net-preview').textContent.replace(/[₱,]/g, ''))
     };
 
-    if (editIdx === null) records.push(rec);
-    else records[editIdx] = rec;
-
+    // DUMMY DATA MODE: Update dummy data instead of API
+    // REMOVE THIS BLOCK when using real API
+    if (editId) {
+      const idx = DUMMY_PAYROLLS.findIndex(p => p.payroll_id == editId);
+      if (idx !== -1) {
+        const emp = DUMMY_EMPLOYEES.find(e => e.emp_id == data.emp_id);
+        DUMMY_PAYROLLS[idx] = { ...DUMMY_PAYROLLS[idx], ...data, 
+          emp_fname: emp.full_name.split(' ')[0],
+          emp_lname: emp.full_name.split(' ')[1],
+          dept_name: emp.dept_name,
+          pos_name: emp.pos_name
+        };
+      }
+    } else {
+      const newId = Math.max(...DUMMY_PAYROLLS.map(p => p.payroll_id)) + 1;
+      const emp = DUMMY_EMPLOYEES.find(e => e.emp_id == data.emp_id);
+      DUMMY_PAYROLLS.push({
+        payroll_id: newId,
+        ...data,
+        emp_fname: emp.full_name.split(' ')[0],
+        emp_lname: emp.full_name.split(' ')[1],
+        dept_name: emp.dept_name,
+        pos_name: emp.pos_name,
+        approval_status: 'Pending'
+      });
+    }
+    showToast(editId ? 'Payroll updated successfully' : 'Payroll record created');
     closeModal();
-    updateStats();
-    renderTable();
+    loadPayrolls();
+    return;
+    // END DUMMY DATA MODE
+
+    // REAL API MODE: Uncomment when connecting to backend
+    /*
+    try {
+      const url = editId 
+        ? '../src/api/hr/payroll/update_payroll.php?id=' + editId
+        : '../src/api/hr/payroll/add_payroll.php';
+      
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        showToast(editId ? 'Payroll updated successfully' : 'Payroll record created');
+        closeModal();
+        loadPayrolls();
+      } else {
+        showToast(result.error || 'Failed to save', 'error');
+      }
+    } catch (err) {
+      showToast('Error saving record', 'error');
+      console.error(err);
+    }
+    */
   }
 
-  function openDelModal(idx) {
-    deleteIdx = idx;
+  // Send to finance
+  async function sendToFinance(id) {
+    // DUMMY DATA MODE
+    // REMOVE THIS BLOCK when using real API
+    const idx = DUMMY_PAYROLLS.findIndex(p => p.payroll_id == id);
+    if (idx !== -1) {
+      DUMMY_PAYROLLS[idx].approval_status = 'Sent';
+      showToast('Sent to Finance for approval');
+      loadPayrolls();
+    }
+    return;
+    // END DUMMY DATA MODE
+
+    // REAL API MODE: Uncomment when connecting to backend
+    /*
+    try {
+      const res = await fetch('../src/api/hr/payroll/send_to_finance.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({payroll_id: id})
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        showToast('Sent to Finance for approval');
+        loadPayrolls();
+      } else {
+        showToast(result.error || 'Failed to send', 'error');
+      }
+    } catch (err) {
+      showToast('Error sending to finance', 'error');
+      console.error(err);
+    }
+    */
+  }
+
+  // Send all pending to finance
+  async function sendAllToFinance() {
+    const pending = records.filter(r => r.approval_status === 'Pending');
+    if (pending.length === 0) {
+      showToast('No pending records to send', 'error');
+      return;
+    }
+    
+    // DUMMY DATA MODE
+    // REMOVE THIS BLOCK when using real API
+    pending.forEach(p => {
+      const idx = DUMMY_PAYROLLS.findIndex(dp => dp.payroll_id == p.payroll_id);
+      if (idx !== -1) DUMMY_PAYROLLS[idx].approval_status = 'Sent';
+    });
+    showToast(`${pending.length} records sent to Finance`);
+    loadPayrolls();
+    return;
+    // END DUMMY DATA MODE
+
+    // REAL API MODE: Uncomment when connecting to backend
+    /*
+    try {
+      const res = await fetch('../src/api/hr/payroll/send_all_to_finance.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ids: pending.map(r => r.payroll_id)})
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        showToast(`${result.count || pending.length} records sent to Finance`);
+        loadPayrolls();
+      } else {
+        showToast(result.error || 'Failed to send', 'error');
+      }
+    } catch (err) {
+      showToast('Error sending to finance', 'error');
+      console.error(err);
+    }
+    */
+  }
+
+  // Send all pending payrolls for an employee to finance
+  async function sendEmployeeToFinance(empId) {
+    const empPending = records.filter(r => r.emp_id == empId && r.approval_status === 'Pending');
+    if (empPending.length === 0) {
+      showToast('No pending records for this employee', 'error');
+      return;
+    }
+    
+    // DUMMY DATA MODE
+    // REMOVE THIS BLOCK when using real API
+    empPending.forEach(p => {
+      const idx = DUMMY_PAYROLLS.findIndex(dp => dp.payroll_id == p.payroll_id);
+      if (idx !== -1) DUMMY_PAYROLLS[idx].approval_status = 'Sent';
+    });
+    showToast(`${empPending.length} records sent to Finance`);
+    loadPayrolls();
+    return;
+    // END DUMMY DATA MODE
+  }
+
+  // Delete functions
+  function openDelModal(id) {
+    deleteId = id;
     document.getElementById('del-modal').classList.add('open');
   }
+  
   function closeDelModal() {
     document.getElementById('del-modal').classList.remove('open');
+    deleteId = null;
   }
-  function confirmDelete() {
-    if (deleteIdx !== null) records.splice(deleteIdx, 1);
-    closeDelModal();
-    updateStats();
-    renderTable();
+  
+  async function confirmDelete() {
+    if (!deleteId) return;
+    
+    // DUMMY DATA MODE
+    // REMOVE THIS BLOCK when using real API
+    const idx = DUMMY_PAYROLLS.findIndex(p => p.payroll_id == deleteId);
+    if (idx !== -1) {
+      DUMMY_PAYROLLS.splice(idx, 1);
+      showToast('Payroll record deleted');
+      closeDelModal();
+      loadPayrolls();
+    }
+    return;
+    // END DUMMY DATA MODE
+
+    // REAL API MODE: Uncomment when connecting to backend
+    /*
+    try {
+      const res = await fetch('../src/api/hr/payroll/delete_payroll.php?id=' + deleteId);
+      const result = await res.json();
+      
+      if (result.success) {
+        showToast('Payroll record deleted');
+        closeDelModal();
+        loadPayrolls();
+      } else {
+        showToast(result.error || 'Failed to delete', 'error');
+      }
+    } catch (err) {
+      showToast('Error deleting record', 'error');
+      console.error(err);
+    }
+    */
   }
 
-  function updatePeriodStats() { updateStats(); }
-
+  // Export CSV
   function exportCSV() {
-    const headers = ['ID','Employee','Period','Pay Date','Base','Bonus','OT','Deductions','Net Salary','Status'];
-    const rows = records.map(r => [r.id, r.name, r.period, r.payDate, r.base, r.bonus, r.ot, r.deductions, r.net, r.status]);
+    const headers = ['ID','Employee','Department','Position','Period Start','Period End','Base Salary','Bonus','Overtime','Deductions','Net Salary','Status'];
+    const rows = records.map(r => [
+      r.payroll_id,
+      r.emp_fname + ' ' + r.emp_lname,
+      r.dept_name || 'N/A',
+      r.pos_name || 'N/A',
+      r.payperiod_start,
+      r.payperiod_end,
+      r.base_salary,
+      r.bonus || 0,
+      r.overtime || 0,
+      r.deduction_total || 0,
+      r.net_salary,
+      r.approval_status || 'Pending'
+    ]);
+    
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const a = document.createElement('a');
-    a.href = 'data:text/csv,' + encodeURIComponent(csv);
-    a.download = 'payroll.csv';
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'payroll_records.csv';
     a.click();
   }
 
-  document.getElementById('pay-modal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
-  document.getElementById('del-modal').addEventListener('click', function(e) { if(e.target===this) closeDelModal(); });
+  // Close modals on outside click
+  document.getElementById('pay-modal').addEventListener('click', function(e) { 
+    if(e.target === this) closeModal(); 
+  });
+  document.getElementById('del-modal').addEventListener('click', function(e) { 
+    if(e.target === this) closeDelModal(); 
+  });
+  document.getElementById('view-modal').addEventListener('click', function(e) { 
+    if(e.target === this) closeViewModal(); 
+  });
 
-  updateStats();
-  renderTable();
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    loadEmployees();
+    loadPayrolls();
+  });
 </script>
 </body>
 </html>
