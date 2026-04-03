@@ -467,9 +467,7 @@
       </div>
       <div class="modal-group">
         <label>Position Applied</label>
-        <select id="m-vacancy">
-          <option value="">Select position…</option>
-        </select>
+        <input type="text" id="m-position" placeholder="e.g. Barista"/>
       </div>
       <div class="modal-group">
         <label>Status</label>
@@ -504,70 +502,25 @@
 </div>
 
 <script>
-  const BASE_REC = '/hrm_module/src/api/hr/recruitment';
+  let applicants = [
+    { first:'Pedro',  last:'Garcia',   email:'pedro@mail.com', position:'Barista', date:'Mar 1, 2026', status:'Interview' },
+    { first:'Lea',    last:'Mangahas', email:'lea@mail.com',   position:'Cashier', date:'Mar 2, 2026', status:'Applied'   },
+    { first:'Carlo',  last:'Reyes',    email:'carlo@mail.com', position:'Barista', date:'Mar 3, 2026', status:'Screening' },
+  ];
 
-  let applicants = [];
-  let editIdx    = null;
-  let deleteIdx  = null;
+  let editIdx   = null;
+  let deleteIdx = null;
 
-  // ── LOAD VACANCIES INTO DROPDOWN ──
-  async function loadVacancyDropdown() {
-    try {
-      const res  = await fetch(`${BASE_REC}/get_vacancies.php`);
-      const json = await res.json();
-      if (json.success) {
-        const sel = document.getElementById('m-vacancy');
-        sel.innerHTML = '<option value="">Select position…</option>';
-        json.data.forEach(v => {
-          const opt = document.createElement('option');
-          opt.value       = v.vacancy_id;
-          opt.textContent = v.job_title;
-          sel.appendChild(opt);
-        });
-      }
-    } catch (err) {
-      console.error('Vacancy dropdown error:', err);
-    }
-  }
-
-  // ── LOAD APPLICANTS ──
-  async function loadApplicants() {
-    try {
-      const res  = await fetch(`${BASE_REC}/get_applicants.php`);
-      const json = await res.json();
-      if (json.success) {
-        applicants = json.data;
-        updateStats();
-        filterTable();
-      } else {
-        console.error('Failed to load:', json.error);
-      }
-    } catch (err) {
-      console.error('Load error:', err);
-    }
-  }
-
-  // ── STATS ──
-  function updateStats() {
-    const thisMonth = new Date().toISOString().slice(0, 7);
-    document.getElementById('stat-total').textContent =
-      applicants.length;
-    document.getElementById('stat-interview').textContent =
-      applicants.filter(a => a.application_status === 'Interview').length;
-    document.getElementById('stat-hired').textContent =
-      applicants.filter(a =>
-        a.application_status === 'Hired' &&
-        a.result_date && a.result_date.startsWith(thisMonth)
-      ).length;
-  }
-
-  // ── STATUS CLASS ──
   function statusClass(s) {
-    if (!s) return '';
-    return s.toLowerCase().replace(' ', '-');
+    return s.toLowerCase();
   }
 
-  // ── RENDER TABLE ──
+  function updateStats() {
+    document.getElementById('stat-total').textContent     = applicants.length;
+    document.getElementById('stat-interview').textContent = applicants.filter(a => a.status === 'Interview').length;
+    document.getElementById('stat-hired').textContent     = applicants.filter(a => a.status === 'Hired').length;
+  }
+
   function renderTable(list) {
     if (!list) list = getFiltered();
     document.getElementById('record-count').textContent =
@@ -577,12 +530,12 @@
       const realIdx = applicants.indexOf(a);
       return `
         <tr>
-          <td class="name-cell">${a.f_name} ${a.l_name}</td>
-          <td class="email-cell">${a.email ?? '—'}</td>
-          <td><span class="pos-badge">${a.job_title ?? '—'}</span></td>
-          <td class="date-cell">${a.application_date ?? '—'}</td>
-          <td><span class="status-badge ${statusClass(a.application_status)}">
-            <span class="status-dot"></span>${a.application_status}
+          <td class="name-cell">${a.first} ${a.last}</td>
+          <td class="email-cell">${a.email}</td>
+          <td><span class="pos-badge">${a.position}</span></td>
+          <td class="date-cell">${a.date}</td>
+          <td><span class="status-badge ${statusClass(a.status)}">
+            <span class="status-dot"></span>${a.status}
           </span></td>
           <td>
             <div class="actions">
@@ -594,42 +547,41 @@
     }).join('');
   }
 
-  // ── FILTER ──
   function getFiltered() {
     const q  = document.getElementById('search-input').value.toLowerCase();
     const sf = document.getElementById('status-filter').value;
     return applicants.filter(a => {
-      const name = (a.f_name + ' ' + a.l_name).toLowerCase();
-      return (!q  || name.includes(q) || (a.email ?? '').toLowerCase().includes(q)) &&
-             (!sf || a.application_status === sf);
+      const name = (a.first + ' ' + a.last).toLowerCase();
+      return (!q || name.includes(q) || a.email.toLowerCase().includes(q)) &&
+             (!sf || a.status === sf);
     });
   }
+
   function filterTable() { renderTable(getFiltered()); }
 
-  // ── OPEN ADD MODAL ──
   function openAddModal() {
     editIdx = null;
     document.getElementById('modal-title').textContent = 'Add Applicant';
     document.getElementById('m-first').value    = '';
     document.getElementById('m-last').value     = '';
     document.getElementById('m-email').value    = '';
-    document.getElementById('m-vacancy').value  = '';
+    document.getElementById('m-position').value = '';
     document.getElementById('m-status').value   = 'Applied';
     document.getElementById('m-date').value     = new Date().toISOString().split('T')[0];
     document.getElementById('app-modal').classList.add('open');
   }
 
-  // ── OPEN EDIT MODAL ──
   function openEditModal(idx) {
     editIdx = idx;
     const a = applicants[idx];
     document.getElementById('modal-title').textContent = 'Edit Applicant';
-    document.getElementById('m-first').value   = a.f_name            ?? '';
-    document.getElementById('m-last').value    = a.l_name            ?? '';
-    document.getElementById('m-email').value   = a.email             ?? '';
-    document.getElementById('m-vacancy').value = a.vacancy_id        ?? '';
-    document.getElementById('m-status').value  = a.application_status ?? 'Applied';
-    document.getElementById('m-date').value    = a.application_date  ?? '';
+    document.getElementById('m-first').value    = a.first;
+    document.getElementById('m-last').value     = a.last;
+    document.getElementById('m-email').value    = a.email;
+    document.getElementById('m-position').value = a.position;
+    document.getElementById('m-status').value   = a.status;
+    const d = new Date(a.date);
+    if (!isNaN(d)) document.getElementById('m-date').value = d.toISOString().split('T')[0];
     document.getElementById('app-modal').classList.add('open');
   }
 
@@ -638,50 +590,25 @@
     editIdx = null;
   }
 
-  // ── SAVE ──
-  async function saveApplicant() {
-    const first      = document.getElementById('m-first').value.trim();
-    const last       = document.getElementById('m-last').value.trim();
-    const email      = document.getElementById('m-email').value.trim();
-    const vacancy_id = document.getElementById('m-vacancy').value;
-    const status     = document.getElementById('m-status').value;
-    const rawDate    = document.getElementById('m-date').value;
-
+  function saveApplicant() {
+    const first    = document.getElementById('m-first').value.trim();
+    const last     = document.getElementById('m-last').value.trim();
+    const email    = document.getElementById('m-email').value.trim();
+    const position = document.getElementById('m-position').value.trim();
+    const status   = document.getElementById('m-status').value;
+    const rawDate  = document.getElementById('m-date').value;
     if (!first || !last) { alert('Please enter first and last name.'); return; }
-    if (!rawDate)        { alert('Please select an application date.'); return; }
-
-    const payload = {
-      f_name:             first,
-      l_name:             last,
-      email:              email      || null,
-      vacancy_id:         vacancy_id || null,
-      application_date:   rawDate,
-      application_status: status,
-    };
-
-    const isEdit = editIdx !== null;
-    if (isEdit) payload.applicant_id = applicants[editIdx].applicant_id;
-
-    try {
-      const res  = await fetch(`${BASE_REC}/${isEdit ? 'update_applicant' : 'add_applicant'}.php`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (json.success) {
-        closeModal();
-        loadApplicants();
-      } else {
-        alert('Error: ' + json.error);
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-      alert('Something went wrong. Check the console.');
-    }
+    const dateStr = rawDate
+      ? new Date(rawDate).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'})
+      : '—';
+    const rec = { first, last, email, position, date: dateStr, status };
+    if (editIdx === null) applicants.push(rec);
+    else applicants[editIdx] = rec;
+    closeModal();
+    updateStats();
+    filterTable();
   }
 
-  // ── DELETE ──
   function openDelModal(idx) {
     deleteIdx = idx;
     document.getElementById('del-modal').classList.add('open');
@@ -689,33 +616,18 @@
   function closeDelModal() {
     document.getElementById('del-modal').classList.remove('open');
   }
-  async function confirmDelete() {
-    if (deleteIdx === null) return;
-    try {
-      const res  = await fetch(`${BASE_REC}/delete_applicant.php`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ applicant_id: applicants[deleteIdx].applicant_id }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        closeDelModal();
-        loadApplicants();
-      } else {
-        alert('Error: ' + json.error);
-      }
-    } catch (err) {
-      console.error('Delete error:', err);
-    }
+  function confirmDelete() {
+    if (deleteIdx !== null) applicants.splice(deleteIdx, 1);
+    closeDelModal();
+    updateStats();
+    filterTable();
   }
 
-  // close modals on overlay click
   document.getElementById('app-modal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
   document.getElementById('del-modal').addEventListener('click', function(e) { if(e.target===this) closeDelModal(); });
 
-  // ── INIT ──
-  loadVacancyDropdown();
-  loadApplicants();
+  updateStats();
+  renderTable();
 </script>
 </body>
 </html>
