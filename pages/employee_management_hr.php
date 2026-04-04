@@ -1,3 +1,4 @@
+<?php require_once '../src/api/auth/check_session.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -49,13 +50,8 @@
       padding: 0 20px 28px;
       border-bottom: 1px solid var(--border);
     }
-    .logo-icon {
-      width: 34px; height: 34px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: 15px;
-    }
+    .logo-icon { width:34px; height:34px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
     .logo-text .name { font-family: 'DM Serif Display', serif; font-size: 15px; line-height:1.1; }
     .logo-text .sub  { font-size: 11px; color: var(--muted); }
     nav { flex: 1; padding: 20px 0; }
@@ -353,7 +349,9 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="logo">
-    <div class="logo-icon">{}&#x2609;</div>
+    <div class="logo-icon">
+      <img src="../assets/images/code_latte.png" alt="Code Latte Logo" onerror="this.style.display='none'; this.parentElement.textContent='☕';">
+    </div>
     <div class="logo-text">
       <div class="name">Code Latte</div>
       <div class="sub">HR System</div>
@@ -382,11 +380,20 @@
     </a>
   </nav>
   <div class="user-block">
-    <div class="avatar">A</div>
-    <div class="user-info">
-      <div class="uname">Admin</div>
-      <div class="urole">Store Manager</div>
+    <div class="avatar">
+      <?= strtoupper(substr($_SESSION['emp_fname'] ?? 'A', 0, 1)) ?>
     </div>
+    <div class="user-info">
+      <div class="uname"><?= htmlspecialchars($_SESSION['emp_fname'] ?? 'Admin') ?></div>
+      <div class="urole"><?= htmlspecialchars($_SESSION['pos_name'] ?? 'Staff') ?></div>
+    </div>
+    <a href="/hrm_module/src/api/auth/logout.php" title="Logout" style="margin-left:auto; color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </a>
   </div>
 </aside>
 

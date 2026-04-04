@@ -50,7 +50,7 @@ try {
         FROM payroll_tbl p
         JOIN employee_tbl e ON p.emp_id = e.emp_id
         LEFT JOIN department_tbl d ON e.dept_id = d.dept_id
-        LEFT JOIN position_tbl pos ON e.pos_id = pos.post_id
+        LEFT JOIN position_tbl pos ON e.pos_id = pos.pos_id
         LEFT JOIN fa_payroll_approval fa ON p.payroll_id = fa.payroll_id
         WHERE " . implode(" AND ", $where) . "
         ORDER BY p.payperiod_start DESC
