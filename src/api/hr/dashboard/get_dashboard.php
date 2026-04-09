@@ -6,37 +6,28 @@ require_once __DIR__ . '/../../../config/db.php';
 try {
     $today     = date('Y-m-d');
     $thisMonth = date('Y-m');
-    $thisYear  = date('Y');
 
     // ── 1. STAT CARDS ──
-
-    // Total active staff
     $staffStmt = $pdo->query("
-        SELECT COUNT(*) AS total_staff 
-        FROM employee_tbl 
-        WHERE emp_status = 'Active'
+        SELECT COUNT(*) FROM employee_tbl WHERE emp_status = 'Active'
     ");
     $totalStaff = (int)$staffStmt->fetchColumn();
 
-    // Present today
     $presentStmt = $pdo->prepare("
-        SELECT COUNT(*) 
-        FROM attendance_tbl 
+        SELECT COUNT(*) FROM attendance_tbl 
         WHERE attendance_date = ? AND status = 'Present'
     ");
     $presentStmt->execute([$today]);
     $presentToday = (int)$presentStmt->fetchColumn();
 
-    // Monthly payroll (current month net salary sum)
     $payrollStmt = $pdo->prepare("
-        SELECT COALESCE(SUM(net_salary), 0) AS monthly_payroll
+        SELECT COALESCE(SUM(net_salary), 0)
         FROM payroll_tbl
         WHERE DATE_FORMAT(payperiod_start, '%Y-%m') = ?
     ");
     $payrollStmt->execute([$thisMonth]);
     $monthlyPayroll = (float)$payrollStmt->fetchColumn();
 
-    // Total applicants
     $appStmt = $pdo->query("SELECT COUNT(*) FROM applicant_tbl");
     $totalApplicants = (int)$appStmt->fetchColumn();
 
@@ -48,11 +39,11 @@ try {
 
         $attStmt = $pdo->prepare("
             SELECT 
-                SUM(CASE WHEN a.status = 'Present' THEN 1 ELSE 0 END) AS present,
-                SUM(CASE WHEN a.status = 'Absent'  THEN 1 ELSE 0 END) AS absent,
-                SUM(CASE WHEN a.status = 'Late'    THEN 1 ELSE 0 END) AS late
-            FROM attendance_tbl a
-            WHERE DATE_FORMAT(a.attendance_date, '%Y-%m') = ?
+                SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) AS present,
+                SUM(CASE WHEN status = 'Absent'  THEN 1 ELSE 0 END) AS absent,
+                SUM(CASE WHEN status = 'Late'    THEN 1 ELSE 0 END) AS late
+            FROM attendance_tbl
+            WHERE DATE_FORMAT(attendance_date, '%Y-%m') = ?
         ");
         $attStmt->execute([$monthDate]);
         $row = $attStmt->fetch(PDO::FETCH_ASSOC);
@@ -66,20 +57,14 @@ try {
     }
 
     // ── 3. TODAY'S STATUS ──
-    // Get all active employees and their attendance for today
+    // JOIN position_tbl to get role name dynamically
     $todayStmt = $pdo->prepare("
         SELECT 
             e.emp_id,
-            e.emp_fname        AS emp_fname,
-            e.emp_lname        AS emp_lname,
-            e.emp_schedule     AS emp_schedule,
-            CASE e.Pos_id
-                WHEN 1 THEN 'Barista'
-                WHEN 2 THEN 'Cashier'
-                WHEN 3 THEN 'Kitchen Staff'
-                WHEN 4 THEN 'Supervisor'
-                ELSE '—'
-            END AS emp_role,
+            e.emp_fname,
+            e.emp_lname,
+            e.emp_schedule,
+            p.pos_name AS emp_role,
             COALESCE(
                 CASE 
                     WHEN l.leave_id IS NOT NULL AND l.leave_status = 'Approved' THEN 'On Leave'
@@ -88,10 +73,12 @@ try {
                 'Absent'
             ) AS att_status
         FROM employee_tbl e
-        LEFT JOIN attendance_tbl a 
+        LEFT JOIN position_tbl p
+            ON e.pos_id = p.pos_id
+        LEFT JOIN attendance_tbl a
             ON e.emp_id = a.emp_id AND a.attendance_date = ?
-        LEFT JOIN leave_tbl l 
-            ON e.emp_id = l.emp_id 
+        LEFT JOIN leave_tbl l
+            ON e.emp_id = l.emp_id
             AND ? BETWEEN l.date_start AND l.date_end
             AND l.leave_status = 'Approved'
         WHERE e.emp_status = 'Active'
@@ -101,45 +88,37 @@ try {
     $todaysStatus = $todayStmt->fetchAll(PDO::FETCH_ASSOC);
 
     // ── 4. PAYROLL BY ROLE ──
+    // JOIN position_tbl to get role name dynamically
     $roleStmt = $pdo->prepare("
         SELECT 
-            CASE e.pos_id
-                WHEN 1 THEN 'Barista'
-                WHEN 2 THEN 'Cashier'
-                WHEN 3 THEN 'Kitchen Staff'
-                WHEN 4 THEN 'Supervisor'
-                ELSE 'Other'
-            END AS role,
-            COALESCE(SUM(p.net_salary), 0) AS total_net_salary
-        FROM payroll_tbl p
-        JOIN employee_tbl e ON p.emp_id = e.emp_id
-        WHERE DATE_FORMAT(p.payperiod_start, '%Y-%m') = ?
-        GROUP BY e.pos_id
+            p.pos_name AS role,
+            COALESCE(SUM(pr.net_salary), 0) AS total_net_salary
+        FROM payroll_tbl pr
+        JOIN employee_tbl e  ON pr.emp_id  = e.emp_id
+        JOIN position_tbl p  ON e.pos_id   = p.pos_id
+        WHERE DATE_FORMAT(pr.payperiod_start, '%Y-%m') = ?
+        GROUP BY e.pos_id, p.pos_name
         ORDER BY total_net_salary DESC
     ");
     $roleStmt->execute([$thisMonth]);
     $payrollByRole = $roleStmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // ── 5. PAYROLL SUMMARY (latest records) ──
+    // ── 5. PAYROLL SUMMARY ──
+    // JOIN position_tbl to get role name dynamically
     $summaryStmt = $pdo->prepare("
         SELECT 
-            e.emp_fname        AS emp_fname,
-            e.emp_lname        AS emp_lname,
-            CASE e.Pos_id
-                WHEN 1 THEN 'Barista'
-                WHEN 2 THEN 'Cashier'
-                WHEN 3 THEN 'Kitchen Staff'
-                WHEN 4 THEN 'Supervisor'
-                ELSE '—'
-            END AS emp_role,
-            p.net_salary,
-            p.payperiod_start,
-            p.payperiod_end,
-            p.payroll_status
-        FROM payroll_tbl p
-        JOIN employee_tbl e ON p.emp_id = e.emp_id
-        WHERE DATE_FORMAT(p.payperiod_start, '%Y-%m') = ?
-        ORDER BY p.payroll_id DESC
+            e.emp_fname,
+            e.emp_lname,
+            p.pos_name      AS emp_role,
+            pr.net_salary,
+            pr.payperiod_start,
+            pr.payperiod_end,
+            pr.payroll_status
+        FROM payroll_tbl pr
+        JOIN employee_tbl e ON pr.emp_id = e.emp_id
+        JOIN position_tbl p ON e.pos_id  = p.pos_id
+        WHERE DATE_FORMAT(pr.payperiod_start, '%Y-%m') = ?
+        ORDER BY pr.payroll_id DESC
         LIMIT 10
     ");
     $summaryStmt->execute([$thisMonth]);
