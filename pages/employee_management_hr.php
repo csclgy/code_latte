@@ -444,28 +444,21 @@
       <input type="text" id="f-address" name="emp_address" placeholder="Street, Barangay, City"/>
     </div>
 
-    <div class="form-group">
-      <label>Department</label>
-      <select id="f-dept" name="dept_id">
-        <option value="">Select department...</option>
-        <!-- populate from your dept table -->
-        <option value="1">Kitchen</option>
-        <option value="2">Front of House</option>
-        <option value="3">Management</option>
-      </select>
-    </div>
+  <div class="form-group">
+    <label>Department</label>
+    <select id="f-dept" name="dept_id">
+      <option value="">Select department...</option>
+      <!-- populated dynamically -->
+    </select>
+  </div>
 
-    <div class="form-group">
-      <label>Position</label>
-      <select id="f-pos" name="Pos_id">
-        <option value="">Select position...</option>
-        <!-- populate from your position table -->
-        <option value="1">Barista</option>
-        <option value="2">Cashier</option>
-        <option value="3">Kitchen Staff</option>
-        <option value="4">Supervisor</option>
-      </select>
-    </div>
+  <div class="form-group">
+    <label>Position</label>
+    <select id="f-pos" name="pos_id">
+      <option value="">Select position...</option>
+      <!-- populated dynamically -->
+    </select>
+  </div>
 
     <div class="form-group">
       <label>Schedule</label>
@@ -572,8 +565,55 @@
   let employees   = [];
   let editIndex   = null;
   let deleteIndex = null;
+  let positionMap = {}; // ← declared at top
+  let deptMap     = {}; // ← declared at top
 
-  // ── LOAD ──
+  // ── LOAD DROPDOWNS ──
+  async function loadDropdowns() {
+    try {
+      const [deptRes, posRes] = await Promise.all([
+        fetch(`${BASE}/get_departments.php`),
+        fetch(`${BASE}/get_positions.php`)
+      ]);
+
+      const deptJson = await deptRes.json();
+      const posJson  = await posRes.json();
+
+      // Populate departments
+      if (deptJson.success) {
+        const deptSel = document.getElementById('f-dept');
+        deptSel.innerHTML = '<option value="">Select department...</option>';
+        deptJson.data.forEach(d => {
+          deptMap[String(d.dept_id)] = d.dept_name; // ← store in map
+          const opt = document.createElement('option');
+          opt.value       = d.dept_id;
+          opt.textContent = d.dept_name;
+          deptSel.appendChild(opt);
+        });
+      }
+
+      // Populate positions
+      if (posJson.success) {
+        const posSel = document.getElementById('f-pos');
+        posSel.innerHTML = '<option value="">Select position...</option>';
+        posJson.data.forEach(p => {
+          positionMap[String(p.pos_id)] = p.pos_name; // ← store in map
+          const opt = document.createElement('option');
+          opt.value       = p.pos_id;
+          opt.textContent = p.pos_name;
+          posSel.appendChild(opt);
+        });
+      }
+
+      // Load employees AFTER maps are populated
+      loadEmployees();
+
+    } catch (err) {
+      console.error('Dropdown load error:', err);
+    }
+  }
+
+  // ── LOAD EMPLOYEES ──
   async function loadEmployees() {
     try {
       const res  = await fetch(`${BASE}/get_employees.php`);
@@ -589,7 +629,7 @@
     }
   }
 
-  // ── RENDER TABLE ──
+  // ── HELPERS ──
   function statusClass(s) {
     if (s === 'Active')   return 'active';
     if (s === 'On Leave') return 'on-leave';
@@ -597,10 +637,14 @@
   }
 
   function getPosLabel(pos_id) {
-    const map = { '1':'Barista', '2':'Cashier', '3':'Kitchen Staff', '4':'Supervisor' };
-    return map[String(pos_id)] || '—';
+    return positionMap[String(pos_id)] || '—'; // ← String() to handle number/string mismatch
   }
 
+  function getDeptLabel(dept_id) {
+    return deptMap[String(dept_id)] || '—';
+  }
+
+  // ── RENDER TABLE ──
   function renderTable(list) {
     const tbody = document.getElementById('emp-table-body');
     document.getElementById('record-count').textContent =
@@ -675,22 +719,21 @@
     const e = employees[idx];
     document.getElementById('form-title').textContent = 'Edit Employee';
 
-    document.getElementById('f-fname').value    = e.emp_fname    ?? '';
-    document.getElementById('f-lname').value    = e.emp_lname    ?? '';
-    document.getElementById('f-mname').value    = e.emp_mname    ?? '';
-    document.getElementById('f-email').value    = e.emp_email    ?? '';
-    document.getElementById('f-contact').value  = e.emp_contact  ?? '';
-    document.getElementById('f-address').value  = e.emp_address  ?? '';
-    document.getElementById('f-dept').value     = e.dept_id      ?? '';
-    document.getElementById('f-pos').value      = e.pos_id       ?? '';
-    document.getElementById('f-schedule').value = e.emp_schedule ?? 'Morning';
+    document.getElementById('f-fname').value    = e.emp_fname         ?? '';
+    document.getElementById('f-lname').value    = e.emp_lname         ?? '';
+    document.getElementById('f-mname').value    = e.emp_mname         ?? '';
+    document.getElementById('f-email').value    = e.emp_email         ?? '';
+    document.getElementById('f-contact').value  = e.emp_contact       ?? '';
+    document.getElementById('f-address').value  = e.emp_address       ?? '';
+    document.getElementById('f-dept').value     = e.dept_id           ?? '';
+    document.getElementById('f-pos').value      = e.pos_id            ?? '';
+    document.getElementById('f-schedule').value = e.emp_schedule      ?? 'Morning';
     document.getElementById('f-hours').value    = e.emp_working_hours ?? '';
-    document.getElementById('f-age').value      = e.emp_age      ?? '';
-    document.getElementById('f-status').value   = e.emp_status   ?? 'Active';
-    document.getElementById('f-username').value = e.User_name    ?? '';
+    document.getElementById('f-age').value      = e.emp_age           ?? '';
+    document.getElementById('f-status').value   = e.emp_status        ?? 'Active';
+    document.getElementById('f-username').value = e.user_name         ?? ''; // ← fixed from e.User_name
     document.getElementById('f-password').value = ''; // never pre-fill
 
-    // format date for input[type=date]
     if (e.emp_date_hired) {
       const d = new Date(e.emp_date_hired);
       if (!isNaN(d)) document.getElementById('f-date').value = d.toISOString().split('T')[0];
@@ -708,12 +751,11 @@
     const username = document.getElementById('f-username').value.trim();
     const password = document.getElementById('f-password').value;
 
-    // Validation
-    if (!fname || !lname)        { alert('Please enter first and last name.'); return; }
-    if (!dept_id)                { alert('Please select a department.'); return; }
-    if (!pos_id)                 { alert('Please select a position.'); return; }
-    if (!username)               { alert('Please enter a username.'); return; }
-    if (editIndex === null && !password) { alert('Please enter a password.'); return; }
+    if (!fname || !lname)                        { alert('Please enter first and last name.'); return; }
+    if (!dept_id)                                { alert('Please select a department.'); return; }
+    if (!pos_id)                                 { alert('Please select a position.'); return; }
+    if (!username)                               { alert('Please enter a username.'); return; }
+    if (editIndex === null && !password)         { alert('Please enter a password.'); return; }
 
     const payload = {
       emp_fname:         fname,
@@ -722,18 +764,17 @@
       emp_email:         document.getElementById('f-email').value.trim(),
       emp_contact:       document.getElementById('f-contact').value.trim(),
       emp_address:       document.getElementById('f-address').value.trim(),
-      emp_age:           document.getElementById('f-age').value || null,
+      emp_age:           document.getElementById('f-age').value           || null,
       dept_id:           dept_id,
       pos_id:            pos_id,
       emp_schedule:      document.getElementById('f-schedule').value,
-      emp_working_hours: document.getElementById('f-hours').value || null,
-      emp_date_hired:    document.getElementById('f-date').value || null,
+      emp_working_hours: document.getElementById('f-hours').value         || null,
+      emp_date_hired:    document.getElementById('f-date').value          || null,
       emp_status:        document.getElementById('f-status').value,
       user_name:         username,
       user_password:     password,
     };
 
-    // If editing, attach the emp_id
     const isEdit = editIndex !== null;
     if (isEdit) payload.emp_id = employees[editIndex].emp_id;
 
@@ -747,7 +788,7 @@
 
       if (json.success) {
         closeForm();
-        loadEmployees(); // re-fetch from DB to stay in sync
+        loadEmployees();
       } else {
         alert('Error: ' + json.error);
       }
@@ -769,7 +810,6 @@
 
   async function confirmDelete() {
     if (deleteIndex === null) return;
-
     try {
       const res  = await fetch(`${BASE}/delete_employee.php`, {
         method:  'POST',
@@ -777,10 +817,9 @@
         body:    JSON.stringify({ emp_id: employees[deleteIndex].emp_id }),
       });
       const json = await res.json();
-
       if (json.success) {
         closeDeleteModal();
-        loadEmployees(); // re-fetch from DB
+        loadEmployees();
       } else {
         alert('Error: ' + json.error);
       }
@@ -795,8 +834,8 @@
     if (e.target === this) closeDeleteModal();
   });
 
-  // ── INIT ──
-  loadEmployees();
+  // ── INIT — only call loadDropdowns, it calls loadEmployees internally ──
+  loadDropdowns();
 </script>
 </body>
 </html>
