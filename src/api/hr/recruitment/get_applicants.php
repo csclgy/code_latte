@@ -11,15 +11,14 @@ try {
             a.l_name,
             a.m_name,
             a.email,
-            a.vacancy_id,
+            a.pos_id,
             a.application_date,
             a.application_status,
             a.result_date,
             a.remarks,
-            v.job_title,
-            v.vac_status
+            p.pos_name
         FROM applicant_tbl a
-        LEFT JOIN jobvac_tbl v ON a.vacancy_id = v.vacancy_id
+        LEFT JOIN position_tbl p ON a.pos_id = p.pos_id
         ORDER BY a.application_date DESC
     ");
     $applicants = $stmt->fetchAll(PDO::FETCH_ASSOC);

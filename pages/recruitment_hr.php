@@ -518,25 +518,27 @@
   let applicants = [];
   let editIdx    = null;
   let deleteIdx  = null;
+  let positionMap = {};
 
   // ── LOAD VACANCIES INTO DROPDOWN ──
   async function loadVacancyDropdown() {
-    try {
-      const res  = await fetch(`${BASE_REC}/get_vacancies.php`);
-      const json = await res.json();
-      if (json.success) {
-        const sel = document.getElementById('m-vacancy');
-        sel.innerHTML = '<option value="">Select position…</option>';
-        json.data.forEach(v => {
-          const opt = document.createElement('option');
-          opt.value       = v.vacancy_id;
-          opt.textContent = v.job_title;
-          sel.appendChild(opt);
-        });
+      try {
+          const res  = await fetch('/hrm_module/src/api/hr/employees/get_positions.php');
+          const json = await res.json();
+          if (json.success) {
+              const sel = document.getElementById('m-vacancy');
+              sel.innerHTML = '<option value="">Select position…</option>';
+              json.data.forEach(p => {
+                  positionMap[String(p.pos_id)] = p.pos_name; // ← store for table display
+                  const opt = document.createElement('option');
+                  opt.value       = p.pos_id;
+                  opt.textContent = p.pos_name;
+                  sel.appendChild(opt);
+              });
+          }
+      } catch (err) {
+          console.error('Position dropdown error:', err);
       }
-    } catch (err) {
-      console.error('Vacancy dropdown error:', err);
-    }
   }
 
   // ── LOAD APPLICANTS ──
@@ -580,26 +582,26 @@
   function renderTable(list) {
     if (!list) list = getFiltered();
     document.getElementById('record-count').textContent =
-      list.length + ' record' + (list.length !== 1 ? 's' : '');
+        list.length + ' record' + (list.length !== 1 ? 's' : '');
     const tbody = document.getElementById('rec-table-body');
     tbody.innerHTML = list.map(a => {
-      const realIdx = applicants.indexOf(a);
-      return `
-        <tr>
-          <td class="name-cell">${a.f_name} ${a.l_name}</td>
-          <td class="email-cell">${a.email ?? '—'}</td>
-          <td><span class="pos-badge">${a.job_title ?? '—'}</span></td>
-          <td class="date-cell">${a.application_date ?? '—'}</td>
-          <td><span class="status-badge ${statusClass(a.application_status)}">
-            <span class="status-dot"></span>${a.application_status}
-          </span></td>
-          <td>
-            <div class="actions">
-              <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
-              <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
-            </div>
-          </td>
-        </tr>`;
+        const realIdx = applicants.indexOf(a);
+        return `
+            <tr>
+                <td class="name-cell">${a.f_name} ${a.l_name}</td>
+                <td class="email-cell">${a.email ?? '—'}</td>
+                <td><span class="pos-badge">${a.pos_name ?? positionMap[String(a.pos_id)] ?? '—'}</span></td>
+                <td class="date-cell">${a.application_date ?? '—'}</td>
+                <td><span class="status-badge ${statusClass(a.application_status)}">
+                    <span class="status-dot"></span>${a.application_status}
+                </span></td>
+                <td>
+                    <div class="actions">
+                        <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
+                        <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
+                    </div>
+                </td>
+            </tr>`;
     }).join('');
   }
 
@@ -630,16 +632,16 @@
 
   // ── OPEN EDIT MODAL ──
   function openEditModal(idx) {
-    editIdx = idx;
-    const a = applicants[idx];
-    document.getElementById('modal-title').textContent = 'Edit Applicant';
-    document.getElementById('m-first').value   = a.f_name            ?? '';
-    document.getElementById('m-last').value    = a.l_name            ?? '';
-    document.getElementById('m-email').value   = a.email             ?? '';
-    document.getElementById('m-vacancy').value = a.vacancy_id        ?? '';
-    document.getElementById('m-status').value  = a.application_status ?? 'Applied';
-    document.getElementById('m-date').value    = a.application_date  ?? '';
-    document.getElementById('app-modal').classList.add('open');
+      editIdx = idx;
+      const a = applicants[idx];
+      document.getElementById('modal-title').textContent = 'Edit Applicant';
+      document.getElementById('m-first').value   = a.f_name            ?? '';
+      document.getElementById('m-last').value    = a.l_name            ?? '';
+      document.getElementById('m-email').value   = a.email             ?? '';
+      document.getElementById('m-vacancy').value = a.pos_id            ?? ''; // ← vacancy_id → pos_id
+      document.getElementById('m-status').value  = a.application_status ?? 'Applied';
+      document.getElementById('m-date').value    = a.application_date  ?? '';
+      document.getElementById('app-modal').classList.add('open');
   }
 
   function closeModal() {
@@ -660,12 +662,12 @@
     if (!rawDate)        { alert('Please select an application date.'); return; }
 
     const payload = {
-      f_name:             first,
-      l_name:             last,
-      email:              email      || null,
-      vacancy_id:         vacancy_id || null,
-      application_date:   rawDate,
-      application_status: status,
+        f_name:             first,
+        l_name:             last,
+        email:              email || null,
+        pos_id:             document.getElementById('m-vacancy').value || null, // ← vacancy_id → pos_id
+        application_date:   rawDate,
+        application_status: status,
     };
 
     const isEdit = editIdx !== null;
@@ -723,8 +725,12 @@
   document.getElementById('del-modal').addEventListener('click', function(e) { if(e.target===this) closeDelModal(); });
 
   // ── INIT ──
-  loadVacancyDropdown();
-  loadApplicants();
+  async function init() {
+      await loadVacancyDropdown(); // wait for positions to load first
+      loadApplicants();            // then load applicants so positionMap is ready
+  }
+
+  init();
 </script>
 </body>
 </html>

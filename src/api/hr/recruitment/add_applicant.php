@@ -31,12 +31,12 @@ try {
     $stmt = $pdo->prepare("
         INSERT INTO applicant_tbl (
             f_name, l_name, m_name,
-            email, vacancy_id,
+            email, pos_id,
             application_date, application_status,
             result_date, remarks
         ) VALUES (
             :f_name, :l_name, :m_name,
-            :email, :vacancy_id,
+            :email, :pos_id,
             :application_date, :application_status,
             :result_date, :remarks
         )
@@ -47,7 +47,7 @@ try {
         ':l_name'             => $data['l_name'],
         ':m_name'             => $data['m_name']             ?? null,
         ':email'              => $data['email']              ?? null,
-        ':vacancy_id'         => $data['vacancy_id']         ?? null,
+        ':pos_id'             => $data['pos_id']             ?? null,
         ':application_date'   => $data['application_date'],
         ':application_status' => $data['application_status'] ?? 'Applied',
         ':result_date'        => $data['result_date']        ?? null,
