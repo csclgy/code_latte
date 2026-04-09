@@ -55,6 +55,16 @@ try {
         exit;
     }
 
+    // Restrict access to HR department only
+    if ((int)$employee['dept_id'] !== 1) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Access denied. This system is for Human Resource Department only.'
+        ]);
+        exit;
+    }
+
     // Store session
     $_SESSION['emp_id']    = $employee['emp_id'];
     $_SESSION['emp_fname'] = $employee['emp_fname'];
@@ -67,9 +77,8 @@ try {
 
     // Redirect based on department
     $redirect = match((int)$employee['dept_id']) {
-        1 => '/hrm_module/pages/dashboard_hr.php',      // HR
-        2 => '/hrm_module/pages/dashboard_inv.php',     // Inventory
-        default => '/hrm_module/pages/dashboard_hr.php' // fallback
+        1 => '/hrm_module/pages/dashboard_hr.php',      
+        default => '/hrm_module/pages/dashboard_hr.php'
     };
 
     ob_clean();
