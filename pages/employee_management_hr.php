@@ -514,10 +514,7 @@
       </div>
       <select id="role-filter" onchange="filterTable()">
         <option value="">All Roles</option>
-        <option>Barista</option>
-        <option>Cashier</option>
-        <option>Kitchen Staff</option>
-        <option>Supervisor</option>
+        <!-- populated dynamically -->
       </select>
       <select id="status-filter" onchange="filterTable()">
         <option value="">All Status</option>
@@ -584,7 +581,7 @@
         const deptSel = document.getElementById('f-dept');
         deptSel.innerHTML = '<option value="">Select department...</option>';
         deptJson.data.forEach(d => {
-          deptMap[String(d.dept_id)] = d.dept_name; // ← store in map
+          deptMap[String(d.dept_id)] = d.dept_name;
           const opt = document.createElement('option');
           opt.value       = d.dept_id;
           opt.textContent = d.dept_name;
@@ -592,16 +589,28 @@
         });
       }
 
-      // Populate positions
+      // Populate positions (form dropdown + role filter)
       if (posJson.success) {
-        const posSel = document.getElementById('f-pos');
-        posSel.innerHTML = '<option value="">Select position...</option>';
+        const posSel    = document.getElementById('f-pos');
+        const roleFilter = document.getElementById('role-filter'); // ← filter dropdown
+
+        posSel.innerHTML    = '<option value="">Select position...</option>';
+        roleFilter.innerHTML = '<option value="">All Roles</option>'; // ← reset filter
+
         posJson.data.forEach(p => {
-          positionMap[String(p.pos_id)] = p.pos_name; // ← store in map
-          const opt = document.createElement('option');
-          opt.value       = p.pos_id;
-          opt.textContent = p.pos_name;
-          posSel.appendChild(opt);
+          positionMap[String(p.pos_id)] = p.pos_name;
+
+          // Add to form dropdown
+          const formOpt = document.createElement('option');
+          formOpt.value       = p.pos_id;
+          formOpt.textContent = p.pos_name;
+          posSel.appendChild(formOpt);
+
+          // Add to role filter dropdown ← same data, different dropdown
+          const filterOpt = document.createElement('option');
+          filterOpt.value       = p.pos_id; // ← use pos_id as value for filtering
+          filterOpt.textContent = p.pos_name;
+          roleFilter.appendChild(filterOpt);
         });
       }
 
