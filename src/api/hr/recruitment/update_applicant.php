@@ -22,7 +22,6 @@ try {
         UPDATE applicant_tbl SET
             f_name             = :f_name,
             l_name             = :l_name,
-            m_name             = :m_name,
             email              = :email,
             pos_id             = :pos_id,
             application_date   = :application_date,
@@ -35,7 +34,6 @@ try {
     $stmt->execute([
         ':f_name'             => $data['f_name'],
         ':l_name'             => $data['l_name'],
-        ':m_name'             => $data['m_name']             ?? null,
         ':email'              => $data['email']              ?? null,
         ':pos_id'             => $data['pos_id']             ?? null,
         ':application_date'   => $data['application_date'],

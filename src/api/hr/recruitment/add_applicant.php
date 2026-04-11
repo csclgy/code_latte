@@ -30,12 +30,12 @@ if (!empty($data['email'])) {
 try {
     $stmt = $pdo->prepare("
         INSERT INTO applicant_tbl (
-            f_name, l_name, m_name,
+            f_name, l_name,
             email, pos_id,
             application_date, application_status,
             result_date, remarks
         ) VALUES (
-            :f_name, :l_name, :m_name,
+            :f_name, :l_name,
             :email, :pos_id,
             :application_date, :application_status,
             :result_date, :remarks
@@ -45,7 +45,6 @@ try {
     $stmt->execute([
         ':f_name'             => $data['f_name'],
         ':l_name'             => $data['l_name'],
-        ':m_name'             => $data['m_name']             ?? null,
         ':email'              => $data['email']              ?? null,
         ':pos_id'             => $data['pos_id']             ?? null,
         ':application_date'   => $data['application_date'],

@@ -9,7 +9,6 @@ try {
             a.applicant_id,
             a.f_name,
             a.l_name,
-            a.m_name,
             a.email,
             a.pos_id,
             a.application_date,
