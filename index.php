@@ -258,9 +258,9 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     </button>
   </div>
 
-  <div class="login-footer">
+  <!-- <div class="login-footer">
     &copy; <?= date('Y') ?> Code Latte. All rights reserved.
-  </div>
+  </div> -->
 </div>
 
 <script>
