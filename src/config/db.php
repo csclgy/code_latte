@@ -1,7 +1,7 @@
 <?php
-// $host   = '192.168.1.184';
+// $host   = '192.168.137.1';
 // $db     = 'mis_coffee';
-// $user   = 'student';
+// $user   = 'student2';
 // $pass   = '1234'; 
 
 $host   = 'localhost';
