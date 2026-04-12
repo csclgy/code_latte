@@ -330,6 +330,151 @@
       font-size: 13px; font-weight: 600;
       color: #fff; cursor: pointer;
     }
+
+    /* ── DOCUMENT CHECKLIST ── */
+.modal-group.full-width {
+    grid-column: 1 / -1;
+}
+.doc-checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+.doc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background .12s;
+    user-select: none;
+}
+.doc-item:hover { background: var(--border); }
+.doc-item input[type="checkbox"] {
+    display: none; /* hide native checkbox */
+}
+.doc-check {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    background: var(--card);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s, border-color .12s;
+}
+.doc-item input[type="checkbox"]:checked + .doc-check {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.doc-item input[type="checkbox"]:checked + .doc-check::after {
+    content: '';
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+}
+/* ── HIRE SUCCESS MODAL ── */
+.hire-modal {
+    width: 400px;
+    text-align: center;
+}
+.hire-success-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+}
+.hire-modal h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; font-weight: 400;
+    margin-bottom: 6px;
+}
+.hire-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+.credentials-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.credentials-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+.credentials-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.credentials-row:last-child { border-bottom: none; }
+.cred-label {
+    font-size: 12px;
+    color: var(--muted);
+    width: 72px;
+    flex-shrink: 0;
+}
+.cred-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    flex: 1;
+    letter-spacing: .02em;
+}
+.btn-copy {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    transition: background .12s, color .12s;
+}
+.btn-copy:hover { background: var(--border); color: var(--text); }
+.btn-copy.copied {
+    background: #e8f5ec;
+    border-color: var(--present);
+    color: var(--present);
+}
+.hire-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fef3e2;
+    border: 1px solid #f0d9b0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--late);
+    text-align: left;
+    margin-bottom: 16px;
+}
+.hire-warning svg { flex-shrink: 0; margin-top: 1px; }
   </style>
 </head>
 <body>
@@ -467,6 +612,10 @@
         <input type="text" id="m-last" placeholder="Last name"/>
       </div>
       <div class="modal-group">
+        <label>Middle Name</label>
+        <input type="text" id="m-mname" placeholder="Middle name (optional)"/>
+      </div>
+      <div class="modal-group">
         <label>Email</label>
         <input type="email" id="m-email" placeholder="email@example.com"/>
       </div>
@@ -490,6 +639,59 @@
           <option>Rejected</option>
         </select>
       </div>
+
+      <div class="modal-group">
+        <label>Interviewed By</label>
+        <input type="text" id="m-interviewed-by" placeholder="e.g. Ana Santos"/>
+      </div>
+
+      <!-- DOCUMENT CHECKLIST — full width -->
+      <div class="modal-group full-width">
+        <label>Documents Submitted</label>
+        <div class="doc-checklist">
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="CV"/>
+            <span class="doc-check"></span>
+            CV
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="Transcript of Records (TOR)"/>
+            <span class="doc-check"></span>
+            Transcript of Records (TOR)
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="Diploma"/>
+            <span class="doc-check"></span>
+            Diploma
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="PSA Birth Certificate"/>
+            <span class="doc-check"></span>
+            PSA Birth Certificate
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="SSS Number"/>
+            <span class="doc-check"></span>
+            SSS Number
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="TIN (Tax Identification Number)"/>
+            <span class="doc-check"></span>
+            TIN (Tax Identification Number)
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="PhilHealth"/>
+            <span class="doc-check"></span>
+            PhilHealth
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="Pag-IBIG Number"/>
+            <span class="doc-check"></span>
+            Pag-IBIG Number
+          </label>
+        </div>
+      </div>
+
     </div>
     <div class="modal-actions">
       <button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
@@ -511,7 +713,53 @@
     </div>
   </div>
 </div>
+<!-- HIRE SUCCESS MODAL -->
+<div class="modal-overlay" id="hire-modal">
+  <div class="modal hire-modal">
+    <div class="hire-success-icon">✅</div>
+    <h2>Applicant Hired!</h2>
+    <p class="hire-subtitle">The applicant has been successfully added to the employee list.</p>
 
+    <div class="credentials-box">
+      <div class="credentials-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+        Default Login Credentials
+      </div>
+      <div class="credentials-row">
+        <span class="cred-label">Username</span>
+        <span class="cred-value" id="hire-username"></span>
+        <button class="btn-copy" onclick="copyText('hire-username')" title="Copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        </button>
+      </div>
+      <div class="credentials-row">
+        <span class="cred-label">Password</span>
+        <span class="cred-value" id="hire-password"></span>
+        <button class="btn-copy" onclick="copyText('hire-password')" title="Copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="hire-warning">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      Please inform the employee to change their password after first login.
+    </div>
+
+    <button class="btn-save-modal" onclick="closeHireModal()" style="width:100%; margin-top:6px;">
+      Got it
+    </button>
+  </div>
+</div>
 <script>
   const BASE_REC = '/hrm_module/src/api/hr/recruitment';
 
@@ -617,80 +865,175 @@
   }
   function filterTable() { renderTable(getFiltered()); }
 
-  // ── OPEN ADD MODAL ──
-  function openAddModal() {
+// ── HELPER: get checked documents ──
+function getCheckedDocs() {
+    return Array.from(document.querySelectorAll('input[name="doc"]:checked'))
+        .map(cb => cb.value);
+}
+
+// ── HELPER: set checked documents ──
+function setCheckedDocs(docs) {
+    // uncheck all first
+    document.querySelectorAll('input[name="doc"]').forEach(cb => cb.checked = false);
+    if (!docs) return;
+    // parse if string
+    const list = typeof docs === 'string' ? JSON.parse(docs) : docs;
+    list.forEach(val => {
+        const cb = document.querySelector(`input[name="doc"][value="${val}"]`);
+        if (cb) cb.checked = true;
+    });
+}
+
+// ── OPEN ADD MODAL ──
+function openAddModal() {
     editIdx = null;
     document.getElementById('modal-title').textContent = 'Add Applicant';
-    document.getElementById('m-first').value    = '';
-    document.getElementById('m-last').value     = '';
-    document.getElementById('m-email').value    = '';
-    document.getElementById('m-vacancy').value  = '';
-    document.getElementById('m-status').value   = 'Applied';
-    document.getElementById('m-date').value     = new Date().toISOString().split('T')[0];
+    document.getElementById('m-first').value           = '';
+    document.getElementById('m-last').value            = '';
+    document.getElementById('m-mname').value           = '';
+    document.getElementById('m-email').value           = '';
+    document.getElementById('m-vacancy').value         = '';
+    document.getElementById('m-status').value          = 'Applied';
+    document.getElementById('m-date').value            = new Date().toISOString().split('T')[0];
+    document.getElementById('m-interviewed-by').value = ''; // ← add
+    setCheckedDocs([]);
     document.getElementById('app-modal').classList.add('open');
-  }
+}
 
-  // ── OPEN EDIT MODAL ──
-  function openEditModal(idx) {
-      editIdx = idx;
-      const a = applicants[idx];
-      document.getElementById('modal-title').textContent = 'Edit Applicant';
-      document.getElementById('m-first').value   = a.f_name            ?? '';
-      document.getElementById('m-last').value    = a.l_name            ?? '';
-      document.getElementById('m-email').value   = a.email             ?? '';
-      document.getElementById('m-vacancy').value = a.pos_id            ?? ''; // ← vacancy_id → pos_id
-      document.getElementById('m-status').value  = a.application_status ?? 'Applied';
-      document.getElementById('m-date').value    = a.application_date  ?? '';
-      document.getElementById('app-modal').classList.add('open');
-  }
+// ── OPEN EDIT MODAL ──
+function openEditModal(idx) {
+    editIdx = idx;
+    const a = applicants[idx];
+    document.getElementById('modal-title').textContent         = 'Edit Applicant';
+    document.getElementById('m-first').value                   = a.f_name             ?? '';
+    document.getElementById('m-last').value                    = a.l_name             ?? '';
+    document.getElementById('m-mname').value                   = a.m_name             ?? '';
+    document.getElementById('m-email').value                   = a.email              ?? '';
+    document.getElementById('m-vacancy').value                 = a.pos_id             ?? '';
+    document.getElementById('m-status').value                  = a.application_status ?? 'Applied';
+    document.getElementById('m-date').value                    = a.application_date   ?? '';
+    document.getElementById('m-interviewed-by').value         = a.interviewed_by      ?? ''; // ← add
+    setCheckedDocs(a.documents_submitted);
+    document.getElementById('app-modal').classList.add('open');
+}
 
-  function closeModal() {
+// ── CLOSE MODAL ──
+function closeModal() {
     document.getElementById('app-modal').classList.remove('open');
+    document.getElementById('m-mname').value           = '';
+    document.getElementById('m-interviewed-by').value = ''; // ← add
+    setCheckedDocs([]);
     editIdx = null;
-  }
+}
 
-  // ── SAVE ──
-  async function saveApplicant() {
-    const first      = document.getElementById('m-first').value.trim();
-    const last       = document.getElementById('m-last').value.trim();
-    const email      = document.getElementById('m-email').value.trim();
-    const vacancy_id = document.getElementById('m-vacancy').value;
-    const status     = document.getElementById('m-status').value;
-    const rawDate    = document.getElementById('m-date').value;
+// ── SAVE ──
+async function saveApplicant() {
+    const first        = document.getElementById('m-first').value.trim();
+    const last         = document.getElementById('m-last').value.trim();
+    const mname        = document.getElementById('m-mname').value.trim();
+    const email        = document.getElementById('m-email').value.trim();
+    const status       = document.getElementById('m-status').value;
+    const rawDate      = document.getElementById('m-date').value;
+    const interviewedBy = document.getElementById('m-interviewed-by').value.trim(); // ← add
+    const docs         = getCheckedDocs();
 
     if (!first || !last) { alert('Please enter first and last name.'); return; }
     if (!rawDate)        { alert('Please select an application date.'); return; }
 
     const payload = {
-        f_name:             first,
-        l_name:             last,
-        email:              email || null,
-        pos_id:             document.getElementById('m-vacancy').value || null, // ← vacancy_id → pos_id
-        application_date:   rawDate,
-        application_status: status,
+        f_name:              first,
+        l_name:              last,
+        m_name:              mname          || null,
+        email:               email          || null,
+        pos_id:              document.getElementById('m-vacancy').value || null,
+        application_date:    rawDate,
+        application_status:  status,
+        interviewed_by:      interviewedBy  || null, // ← add
+        documents_submitted: docs.length > 0 ? JSON.stringify(docs) : null,
     };
 
     const isEdit = editIdx !== null;
     if (isEdit) payload.applicant_id = applicants[editIdx].applicant_id;
 
     try {
-      const res  = await fetch(`${BASE_REC}/${isEdit ? 'update_applicant' : 'add_applicant'}.php`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify(payload),
-      });
-      const json = await res.json();
-      if (json.success) {
-        closeModal();
-        loadApplicants();
-      } else {
-        alert('Error: ' + json.error);
-      }
+        const res  = await fetch(`${BASE_REC}/${isEdit ? 'update_applicant' : 'add_applicant'}.php`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (json.success) {
+            if (status === 'Hired' && isEdit) {
+                await hireApplicant(applicants[editIdx].applicant_id);
+            } else if (status === 'Hired' && !isEdit) {
+                await hireApplicant(json.applicant_id);
+            }
+            closeModal();
+            loadApplicants();
+        } else {
+            alert('Error: ' + json.error);
+        }
     } catch (err) {
-      console.error('Save error:', err);
-      alert('Something went wrong. Check the console.');
+        console.error('Save error:', err);
+        alert('Something went wrong. Check the console.');
     }
-  }
+}
+
+// ── HIRE APPLICANT ──
+async function hireApplicant(applicant_id) {
+    try {
+        const res  = await fetch(`${BASE_REC}/hire_applicant.php`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ applicant_id }),
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            if (!json.already_exists) {
+                // show custom hire modal with credentials
+                openHireModal(json.default_username, json.default_password);
+            } else {
+                alert('✅ Status updated to Hired. Employee already exists in the system.');
+            }
+        } else {
+            alert('Hire error: ' + json.error);
+        }
+    } catch (err) {
+        console.error('Hire error:', err);
+    }
+}
+
+// ── OPEN HIRE MODAL ──
+function openHireModal(username, password) {
+    document.getElementById('hire-username').textContent = username;
+    document.getElementById('hire-password').textContent = password;
+    document.getElementById('hire-modal').classList.add('open');
+}
+
+// ── CLOSE HIRE MODAL ──
+function closeHireModal() {
+    document.getElementById('hire-modal').classList.remove('open');
+}
+
+// ── COPY TO CLIPBOARD ──
+function copyText(elementId) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector(`#${elementId}`).nextElementSibling;
+        btn.classList.add('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="20 6 9 12 4 10"/></svg>`;
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+        }, 2000);
+    });
+}
+
+// close hire modal on overlay click
+document.getElementById('hire-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeHireModal();
+});
 
   // ── DELETE ──
   function openDelModal(idx) {

@@ -28,30 +28,37 @@ if (!empty($data['email'])) {
 }
 
 try {
-    $stmt = $pdo->prepare("
-        INSERT INTO applicant_tbl (
-            f_name, l_name,
-            email, pos_id,
-            application_date, application_status,
-            result_date, remarks
-        ) VALUES (
-            :f_name, :l_name,
-            :email, :pos_id,
-            :application_date, :application_status,
-            :result_date, :remarks
-        )
-    ");
+$stmt = $pdo->prepare("
+    INSERT INTO applicant_tbl (
+        f_name, l_name, m_name,
+        email, pos_id,
+        application_date, application_status,
+        result_date, remarks,
+        documents_submitted,
+        interviewed_by          
+    ) VALUES (
+        :f_name, :l_name, :m_name,
+        :email, :pos_id,
+        :application_date, :application_status,
+        :result_date, :remarks,
+        :documents_submitted,
+        :interviewed_by         
+    )
+");
 
-    $stmt->execute([
-        ':f_name'             => $data['f_name'],
-        ':l_name'             => $data['l_name'],
-        ':email'              => $data['email']              ?? null,
-        ':pos_id'             => $data['pos_id']             ?? null,
-        ':application_date'   => $data['application_date'],
-        ':application_status' => $data['application_status'] ?? 'Applied',
-        ':result_date'        => $data['result_date']        ?? null,
-        ':remarks'            => $data['remarks']            ?? null,
-    ]);
+$stmt->execute([
+    ':f_name'               => $data['f_name'],
+    ':l_name'               => $data['l_name'],
+    ':m_name'               => $data['m_name']              ?? null,
+    ':email'                => $data['email']               ?? null,
+    ':pos_id'               => $data['pos_id']              ?? null,
+    ':application_date'     => $data['application_date'],
+    ':application_status'   => $data['application_status']  ?? 'Applied',
+    ':result_date'          => $data['result_date']          ?? null,
+    ':remarks'              => $data['remarks']              ?? null,
+    ':documents_submitted'  => $data['documents_submitted']  ?? null,
+    ':interviewed_by'       => $data['interviewed_by']       ?? null, // ← add
+]);
 
     ob_clean();
     echo json_encode(['success' => true, 'applicant_id' => $pdo->lastInsertId()]);

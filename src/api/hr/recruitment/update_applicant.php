@@ -18,30 +18,36 @@ if (in_array($data['application_status'] ?? '', ['Hired', 'Rejected']) && empty(
 }
 
 try {
-    $stmt = $pdo->prepare("
-        UPDATE applicant_tbl SET
-            f_name             = :f_name,
-            l_name             = :l_name,
-            email              = :email,
-            pos_id             = :pos_id,
-            application_date   = :application_date,
-            application_status = :application_status,
-            result_date        = :result_date,
-            remarks            = :remarks
-        WHERE applicant_id = :applicant_id
-    ");
+$stmt = $pdo->prepare("
+    UPDATE applicant_tbl SET
+        f_name               = :f_name,
+        l_name               = :l_name,
+        m_name               = :m_name,
+        email                = :email,
+        pos_id               = :pos_id,
+        application_date     = :application_date,
+        application_status   = :application_status,
+        result_date          = :result_date,
+        remarks              = :remarks,
+        documents_submitted  = :documents_submitted,
+        interviewed_by       = :interviewed_by        
+    WHERE applicant_id = :applicant_id
+");
 
-    $stmt->execute([
-        ':f_name'             => $data['f_name'],
-        ':l_name'             => $data['l_name'],
-        ':email'              => $data['email']              ?? null,
-        ':pos_id'             => $data['pos_id']             ?? null,
-        ':application_date'   => $data['application_date'],
-        ':application_status' => $data['application_status'] ?? 'Applied',
-        ':result_date'        => $result_date,
-        ':remarks'            => $data['remarks']            ?? null,
-        ':applicant_id'       => $data['applicant_id'],
-    ]);
+$stmt->execute([
+    ':f_name'               => $data['f_name'],
+    ':l_name'               => $data['l_name'],
+    ':m_name'               => $data['m_name']              ?? null,
+    ':email'                => $data['email']               ?? null,
+    ':pos_id'               => $data['pos_id']              ?? null,
+    ':application_date'     => $data['application_date'],
+    ':application_status'   => $data['application_status']  ?? 'Applied',
+    ':result_date'          => $result_date,
+    ':remarks'              => $data['remarks']              ?? null,
+    ':documents_submitted'  => $data['documents_submitted']  ?? null,
+    ':interviewed_by'       => $data['interviewed_by']       ?? null, // ← add
+    ':applicant_id'         => $data['applicant_id'],
+]);
 
     ob_clean();
     echo json_encode(['success' => true]);
