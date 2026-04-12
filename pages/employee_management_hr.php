@@ -25,14 +25,13 @@
       --shadow:   0 2px 12px rgba(80,60,20,.08);
     }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+}
 
     /* ── SIDEBAR ── */
     aside {
@@ -44,6 +43,9 @@
       flex-direction: column;
       padding: 24px 0;
       flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
     }
     .logo {
       display: flex; align-items: center; gap: 10px;
@@ -87,8 +89,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow: visible;
       padding: 32px 36px;
       gap: 20px;
     }
@@ -132,6 +134,21 @@
       to   { opacity:1; transform: translateY(0); }
     }
 
+    .form-section {
+      margin-bottom: 22px;
+    }
+  .form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 6px 12px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  background: var(--accent);
+  border-left: 4px solid var(--gold);
+  }
     .form-panel h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
 
     .form-grid {
@@ -342,6 +359,7 @@
       font-size: 13px; font-weight: 600;
       color: #fff; cursor: pointer;
     }
+    
   </style>
 </head>
 <body>
@@ -407,103 +425,152 @@
   <!-- INLINE FORM -->
 <div class="form-panel" id="emp-form-panel">
   <h2 id="form-title">New Employee</h2>
-  <div class="form-grid">
 
-    <div class="form-group">
-      <label>First Name</label>
-      <input type="text" id="f-fname" name="emp_fname" placeholder="First name"/>
+  <!-- EMPLOYEE INFORMATION -->
+  <div class="form-section">
+    <div class="form-section-title">Employee Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="f-fname" name="emp_fname" placeholder="First name"/>
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="f-lname" name="emp_lname" placeholder="Last name"/>
+      </div>
+      <div class="form-group">
+        <label>Middle Name</label>
+        <input type="text" id="f-mname" name="emp_mname" placeholder="Middle name"/>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="f-age" name="emp_age" placeholder="e.g. 25" min="16" max="80"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="f-email" name="emp_email" placeholder="email@codelatte.com"/>
+      </div>
+      <div class="form-group">
+        <label>Contact</label>
+        <input type="text" id="f-contact" name="emp_contact" placeholder="+63 9XX XXX XXXX"/>
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label>Address</label>
+        <input type="text" id="f-address" name="emp_address" placeholder="Street, Barangay, City"/>
+      </div>
     </div>
-
-    <div class="form-group">
-      <label>Last Name</label>
-      <input type="text" id="f-lname" name="emp_lname" placeholder="Last name"/>
-    </div>
-
-    <div class="form-group">
-      <label>Middle Name</label>
-      <input type="text" id="f-mname" name="emp_mname" placeholder="Middle name"/>
-    </div>
-
-    <div class="form-group">
-      <label>Age</label>
-      <input type="number" id="f-age" name="emp_age" placeholder="e.g. 25" min="16" max="80"/>
-    </div>
-
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="f-email" name="emp_email" placeholder="email@codelatte.com"/>
-    </div>
-
-    <div class="form-group">
-      <label>Contact</label>
-      <input type="text" id="f-contact" name="emp_contact" placeholder="+63 9XX XXX XXXX"/>
-    </div>
-
-    <div class="form-group" style="grid-column: 1 / -1;">
-      <label>Address</label>
-      <input type="text" id="f-address" name="emp_address" placeholder="Street, Barangay, City"/>
-    </div>
-
-  <div class="form-group">
-    <label>Department</label>
-    <select id="f-dept" name="dept_id">
-      <option value="">Select department...</option>
-      <!-- populated dynamically -->
-    </select>
   </div>
 
-  <div class="form-group">
-    <label>Position</label>
-    <select id="f-pos" name="pos_id">
-      <option value="">Select position...</option>
-      <!-- populated dynamically -->
-    </select>
-  </div>
-
-    <div class="form-group">
-      <label>Schedule</label>
-      <select id="f-schedule" name="emp_schedule">
-        <option value="Morning">Morning (6AM–2PM)</option>
-        <option value="Afternoon">Afternoon (2PM–10PM)</option>
-        <option value="Evening">Evening (10PM–6AM)</option>
+  <!-- EMPLOYMENT INFORMATION -->
+  <div class="form-section">
+    <div class="form-section-title">Employment Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Department</label>
+        <select id="f-dept" name="dept_id">
+          <option value="">Select department...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <select id="f-pos" name="pos_id">
+          <option value="">Select position...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Schedule</label>
+        <select id="f-schedule" name="emp_schedule">
+          <option value="Morning">Morning (6AM–2PM)</option>
+          <option value="Afternoon">Afternoon (2PM–10PM)</option>
+          <option value="Evening">Evening (10PM–6AM)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Working Hours</label>
+        <input type="number" id="f-hours" name="emp_working_hours" placeholder="e.g. 8" min="1" max="24"/>
+      </div>
+      <div class="form-group">
+        <label>Basic Salary</label>
+        <input type="number" id="f-salary" name="emp_basic_salary" placeholder="e.g. 15000" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>Date Hired</label>
+        <input type="date" id="f-date" name="emp_date_hired"/>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status" name="emp_status">
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="form-group">
+      <label>Employment Type</label>
+      <select id="f-emp-type" name="emp_type">
+        <option value="">Select type...</option>
+        <option value="Regular">Regular</option>
+        <option value="Probationary">Probationary</option>
+        <option value="Contractual">Contractual</option>
+        <option value="Part-time">Part-time</option>
+        <option value="Seasonal">Seasonal</option>
       </select>
     </div>
-
-    <div class="form-group">
-      <label>Working Hours</label>
-      <input type="number" id="f-hours" name="emp_working_hours" placeholder="e.g. 8" min="1" max="24"/>
+      <div class="form-group">
+        <label>SSS ID</label>
+        <input type="text" id="f-sss" name="emp_SSS" placeholder="XX-XXXXXXX-X"/>
+      </div>
+      <div class="form-group">
+        <label>TIN ID</label>
+        <input type="text" id="f-tin" name="emp_TIN" placeholder="XXX-XXX-XXX"/>
+      </div>
+      <div class="form-group">
+        <label>PhilHealth ID</label>
+        <input type="text" id="f-philhealth" name="emp_Philhealth" placeholder="XX-XXXXXXXXX-X"/>
+      </div>
+      <div class="form-group">
+        <label>Pag-IBIG ID</label>
+        <input type="text" id="f-pagibig" name="emp_Pagibig" placeholder="XXXX-XXXX-XXXX"/>
+      </div>
     </div>
-
-    <div class="form-group">
-      <label>Date Hired</label>
-      <input type="date" id="f-date" name="emp_date_hired"/>
-    </div>
-
-    <div class="form-group">
-      <label>Status</label>
-      <select id="f-status" name="emp_status">
-        <option value="Active">Active</option>
-        <option value="On Leave">On Leave</option>
-        <option value="Inactive">Inactive</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="f-username" name="user_name" placeholder="e.g. jreyes"/>
-    </div>
-
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="f-password" name="user_password" placeholder="Set a password"/>
-    </div>
-
   </div>
+
+  <!-- EMERGENCY CONTACT -->
+  <div class="form-section">
+    <div class="form-section-title">Contact in Case of Emergency</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Contact Name</label>
+        <input type="text" id="f-emergency-name" name="emp_contactemergency" placeholder="Full name"/>
+      </div>
+      <div class="form-group">
+        <label>Contact Number</label>
+        <input type="text" id="f-emergency-num" name="emp_contactemergencynum" placeholder="+63 9XX XXX XXXX"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT DETAILS -->
+  <div class="form-section">
+    <div class="form-section-title">Account Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="f-username" name="user_name" placeholder="e.g. jreyes"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="f-password" name="user_password" placeholder="Set a password"/>
+      </div>
+    </div>
+  </div>
+
   <div class="form-actions">
     <button class="btn-save" onclick="saveEmployee()">Save</button>
     <button class="btn-cancel" onclick="closeForm()">Cancel</button>
   </div>
 </div>
+
 
   <!-- TABLE PANEL -->
   <div class="table-panel">
@@ -714,12 +781,15 @@
 
   function clearForm() {
     ['f-fname','f-lname','f-mname','f-email','f-contact',
-     'f-address','f-date','f-hours','f-age','f-username','f-password'
+     'f-address','f-date','f-hours','f-age','f-username',
+     'f-password', 'f-salary', 'f-emergency-name', 'f-emergency-num', 
+     'f-sss', 'f-tin', 'f-philhealth', 'f-pagibig'
     ].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-dept').value     = '';
     document.getElementById('f-pos').value      = '';
     document.getElementById('f-schedule').value = 'Morning';
     document.getElementById('f-status').value   = 'Active';
+    document.getElementById('f-emp-type').value = '';
   }
 
   // ── OPEN EDIT FORM ──
@@ -742,6 +812,14 @@
     document.getElementById('f-status').value   = e.emp_status        ?? 'Active';
     document.getElementById('f-username').value = e.user_name         ?? ''; // ← fixed from e.User_name
     document.getElementById('f-password').value = ''; // never pre-fill
+    document.getElementById('f-salary').value         = e.emp_basic_salary        ?? '';
+    document.getElementById('f-emergency-name').value = e.emp_contactemergency    ?? '';
+    document.getElementById('f-emergency-num').value  = e.emp_contactemergencynum ?? '';
+    document.getElementById('f-sss').value            = e.emp_SSS                 ?? '';
+    document.getElementById('f-tin').value            = e.emp_TIN                 ?? '';
+    document.getElementById('f-philhealth').value     = e.emp_Philhealth          ?? '';
+    document.getElementById('f-pagibig').value        = e.emp_Pagibig             ?? '';
+    document.getElementById('f-emp-type').value = e.emp_type ?? '';
 
     if (e.emp_date_hired) {
       const d = new Date(e.emp_date_hired);
@@ -782,6 +860,14 @@
       emp_status:        document.getElementById('f-status').value,
       user_name:         username,
       user_password:     password,
+      emp_basic_salary:        document.getElementById('f-salary').value           || null,
+      emp_contactemergency:    document.getElementById('f-emergency-name').value.trim(),
+      emp_contactemergencynum: document.getElementById('f-emergency-num').value.trim(),
+      emp_SSS:                 document.getElementById('f-sss').value.trim(),
+      emp_TIN:                 document.getElementById('f-tin').value.trim(),
+      emp_Philhealth:          document.getElementById('f-philhealth').value.trim(),
+      emp_Pagibig:             document.getElementById('f-pagibig').value.trim(),
+      emp_type: document.getElementById('f-emp-type').value,
     };
 
     const isEdit = editIndex !== null;
