@@ -22,7 +22,17 @@ try {
             Emp_working_hours AS emp_working_hours,
             User_name    AS emp_username,
             dept_id,
-            Pos_id       AS pos_id
+            Pos_id       AS pos_id,
+                    emp_basic_salary,
+            emp_contactemergency,
+            emp_contactemergencynum,
+            emp_SSS,
+            emp_TIN,
+            emp_Philhealth,
+            emp_Pagibig,
+            user_name,
+            user_password,
+            emp_type
         FROM employee_tbl 
         ORDER BY emp_id ASC
     ");

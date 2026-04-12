@@ -49,7 +49,15 @@ try {
                 emp_status        = :status,
                 emp_schedule      = :schedule,
                 emp_working_hours = :working_hours,
-                user_name         = :username
+                user_name         = :username,
+                emp_basic_salary        = :basic_salary,
+                emp_contactemergency    = :emergency_name,
+                emp_contactemergencynum = :emergency_num,
+                emp_SSS                 = :sss,
+                emp_TIN                 = :tin,
+                emp_Philhealth          = :philhealth,
+                emp_Pagibig             = :pagibig,
+                emp_type                = :emp_type
             WHERE emp_id = :emp_id
         ");
     }
@@ -58,7 +66,7 @@ try {
     $stmt->bindValue(':lname',         $data['emp_lname']);
     $stmt->bindValue(':mname',         $data['emp_mname']         ?? '');
     $stmt->bindValue(':email',         $data['emp_email']);
-    $stmt->bindValue(':contact',       $data['Emp_contact']       ?? '');
+    $stmt->bindValue(':contact',       $data['emp_contact']       ?? '');
     $stmt->bindValue(':address',       $data['emp_address']       ?? '');
     $stmt->bindValue(':age',           $data['emp_age']           ?? null);
     $stmt->bindValue(':dept_id',       $data['dept_id']);
@@ -69,6 +77,14 @@ try {
     $stmt->bindValue(':working_hours', $data['emp_working_hours'] ?? 8);
     $stmt->bindValue(':username',      $data['user_name']);
     $stmt->bindValue(':emp_id',        $data['emp_id']);
+    $stmt->bindValue(':basic_salary',   $data['emp_basic_salary']        ?? null);
+    $stmt->bindValue(':emergency_name', $data['emp_contactemergency']    ?? '');
+    $stmt->bindValue(':emergency_num',  $data['emp_contactemergencynum'] ?? '');
+    $stmt->bindValue(':sss',            $data['emp_SSS']                 ?? '');
+    $stmt->bindValue(':tin',            $data['emp_TIN']                 ?? '');
+    $stmt->bindValue(':philhealth',     $data['emp_Philhealth']          ?? '');
+    $stmt->bindValue(':pagibig',        $data['emp_Pagibig']             ?? '');
+    $stmt->bindValue(':emp_type',       $data['emp_type']                ?? null);
 
     $stmt->execute();
     echo json_encode(['success' => true]);
