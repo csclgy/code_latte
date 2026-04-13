@@ -1,3 +1,4 @@
+<?php require_once '../src/api/auth/check_session.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,11 +49,8 @@
       padding: 0 20px 28px;
       border-bottom: 1px solid var(--border);
     }
-    .logo-icon {
-      width: 34px; height: 34px; background: var(--accent);
-      border-radius: 8px; display: flex; align-items: center;
-      justify-content: center; color: #fff; font-size: 15px;
-    }
+    .logo-icon { width:34px; height:34px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
     .logo-text .name { font-family: 'DM Serif Display', serif; font-size: 15px; line-height:1.1; }
     .logo-text .sub  { font-size: 11px; color: var(--muted); }
     nav { flex: 1; padding: 20px 0; }
@@ -332,6 +330,151 @@
       font-size: 13px; font-weight: 600;
       color: #fff; cursor: pointer;
     }
+
+    /* ── DOCUMENT CHECKLIST ── */
+.modal-group.full-width {
+    grid-column: 1 / -1;
+}
+.doc-checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+}
+.doc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: background .12s;
+    user-select: none;
+}
+.doc-item:hover { background: var(--border); }
+.doc-item input[type="checkbox"] {
+    display: none; /* hide native checkbox */
+}
+.doc-check {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    background: var(--card);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s, border-color .12s;
+}
+.doc-item input[type="checkbox"]:checked + .doc-check {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.doc-item input[type="checkbox"]:checked + .doc-check::after {
+    content: '';
+    width: 9px;
+    height: 5px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+    display: block;
+}
+/* ── HIRE SUCCESS MODAL ── */
+.hire-modal {
+    width: 400px;
+    text-align: center;
+}
+.hire-success-icon {
+    font-size: 42px;
+    margin-bottom: 12px;
+}
+.hire-modal h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; font-weight: 400;
+    margin-bottom: 6px;
+}
+.hire-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+.credentials-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.credentials-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+}
+.credentials-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+}
+.credentials-row:last-child { border-bottom: none; }
+.cred-label {
+    font-size: 12px;
+    color: var(--muted);
+    width: 72px;
+    flex-shrink: 0;
+}
+.cred-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    flex: 1;
+    letter-spacing: .02em;
+}
+.btn-copy {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 6px;
+    cursor: pointer;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    transition: background .12s, color .12s;
+}
+.btn-copy:hover { background: var(--border); color: var(--text); }
+.btn-copy.copied {
+    background: #e8f5ec;
+    border-color: var(--present);
+    color: var(--present);
+}
+.hire-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: #fef3e2;
+    border: 1px solid #f0d9b0;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--late);
+    text-align: left;
+    margin-bottom: 16px;
+}
+.hire-warning svg { flex-shrink: 0; margin-top: 1px; }
   </style>
 </head>
 <body>
@@ -339,7 +482,9 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="logo">
-    <div class="logo-icon">{}&#x2609;</div>
+    <div class="logo-icon">
+      <img src="../assets/images/code_latte.png" alt="Code Latte Logo" onerror="this.style.display='none'; this.parentElement.textContent='☕';">
+    </div>
     <div class="logo-text">
       <div class="name">Code Latte</div>
       <div class="sub">HR System</div>
@@ -368,11 +513,20 @@
     </a>
   </nav>
   <div class="user-block">
-    <div class="avatar">A</div>
-    <div class="user-info">
-      <div class="uname">Admin</div>
-      <div class="urole">Store Manager</div>
+    <div class="avatar">
+      <?= strtoupper(substr($_SESSION['emp_fname'] ?? 'A', 0, 1)) ?>
     </div>
+    <div class="user-info">
+      <div class="uname"><?= htmlspecialchars($_SESSION['emp_fname'] ?? 'Admin') ?></div>
+      <div class="urole"><?= htmlspecialchars($_SESSION['pos_name'] ?? 'Staff') ?></div>
+    </div>
+    <a href="/hrm_module/src/api/auth/logout.php" title="Logout" style="margin-left:auto; color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </a>
   </div>
 </aside>
 
@@ -458,6 +612,10 @@
         <input type="text" id="m-last" placeholder="Last name"/>
       </div>
       <div class="modal-group">
+        <label>Middle Name</label>
+        <input type="text" id="m-mname" placeholder="Middle name (optional)"/>
+      </div>
+      <div class="modal-group">
         <label>Email</label>
         <input type="email" id="m-email" placeholder="email@example.com"/>
       </div>
@@ -467,7 +625,9 @@
       </div>
       <div class="modal-group">
         <label>Position Applied</label>
-        <input type="text" id="m-position" placeholder="e.g. Barista"/>
+        <select id="m-vacancy">
+          <option value="">Select position…</option>
+        </select>
       </div>
       <div class="modal-group">
         <label>Status</label>
@@ -479,6 +639,59 @@
           <option>Rejected</option>
         </select>
       </div>
+
+      <div class="modal-group">
+        <label>Interviewed By</label>
+        <input type="text" id="m-interviewed-by" placeholder="e.g. Ana Santos"/>
+      </div>
+
+      <!-- DOCUMENT CHECKLIST — full width -->
+      <div class="modal-group full-width">
+        <label>Documents Submitted</label>
+        <div class="doc-checklist">
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="CV"/>
+            <span class="doc-check"></span>
+            CV
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="Transcript of Records (TOR)"/>
+            <span class="doc-check"></span>
+            Transcript of Records (TOR)
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="Diploma"/>
+            <span class="doc-check"></span>
+            Diploma
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="PSA Birth Certificate"/>
+            <span class="doc-check"></span>
+            PSA Birth Certificate
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="SSS Number"/>
+            <span class="doc-check"></span>
+            SSS Number
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="TIN (Tax Identification Number)"/>
+            <span class="doc-check"></span>
+            TIN (Tax Identification Number)
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="PhilHealth"/>
+            <span class="doc-check"></span>
+            PhilHealth
+          </label>
+          <label class="doc-item">
+            <input type="checkbox" name="doc" value="Pag-IBIG Number"/>
+            <span class="doc-check"></span>
+            Pag-IBIG Number
+          </label>
+        </div>
+      </div>
+
     </div>
     <div class="modal-actions">
       <button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
@@ -500,115 +713,329 @@
     </div>
   </div>
 </div>
+<!-- HIRE SUCCESS MODAL -->
+<div class="modal-overlay" id="hire-modal">
+  <div class="modal hire-modal">
+    <div class="hire-success-icon">✅</div>
+    <h2>Applicant Hired!</h2>
+    <p class="hire-subtitle">The applicant has been successfully added to the employee list.</p>
 
+    <div class="credentials-box">
+      <div class="credentials-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+        </svg>
+        Default Login Credentials
+      </div>
+      <div class="credentials-row">
+        <span class="cred-label">Username</span>
+        <span class="cred-value" id="hire-username"></span>
+        <button class="btn-copy" onclick="copyText('hire-username')" title="Copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        </button>
+      </div>
+      <div class="credentials-row">
+        <span class="cred-label">Password</span>
+        <span class="cred-value" id="hire-password"></span>
+        <button class="btn-copy" onclick="copyText('hire-password')" title="Copy">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="hire-warning">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      Please inform the employee to change their password after first login.
+    </div>
+
+    <button class="btn-save-modal" onclick="closeHireModal()" style="width:100%; margin-top:6px;">
+      Got it
+    </button>
+  </div>
+</div>
 <script>
-  let applicants = [
-    { first:'Pedro',  last:'Garcia',   email:'pedro@mail.com', position:'Barista', date:'Mar 1, 2026', status:'Interview' },
-    { first:'Lea',    last:'Mangahas', email:'lea@mail.com',   position:'Cashier', date:'Mar 2, 2026', status:'Applied'   },
-    { first:'Carlo',  last:'Reyes',    email:'carlo@mail.com', position:'Barista', date:'Mar 3, 2026', status:'Screening' },
-  ];
+  const BASE_REC = '/hrm_module/src/api/hr/recruitment';
 
-  let editIdx   = null;
-  let deleteIdx = null;
+  let applicants = [];
+  let editIdx    = null;
+  let deleteIdx  = null;
+  let positionMap = {};
 
-  function statusClass(s) {
-    return s.toLowerCase();
+  // ── LOAD VACANCIES INTO DROPDOWN ──
+  async function loadVacancyDropdown() {
+      try {
+          const res  = await fetch('/hrm_module/src/api/hr/employees/get_positions.php');
+          const json = await res.json();
+          if (json.success) {
+              const sel = document.getElementById('m-vacancy');
+              sel.innerHTML = '<option value="">Select position…</option>';
+              json.data.forEach(p => {
+                  positionMap[String(p.pos_id)] = p.pos_name; // ← store for table display
+                  const opt = document.createElement('option');
+                  opt.value       = p.pos_id;
+                  opt.textContent = p.pos_name;
+                  sel.appendChild(opt);
+              });
+          }
+      } catch (err) {
+          console.error('Position dropdown error:', err);
+      }
   }
 
+  // ── LOAD APPLICANTS ──
+  async function loadApplicants() {
+    try {
+      const res  = await fetch(`${BASE_REC}/get_applicants.php`);
+      const json = await res.json();
+      if (json.success) {
+        applicants = json.data;
+        updateStats();
+        filterTable();
+      } else {
+        console.error('Failed to load:', json.error);
+      }
+    } catch (err) {
+      console.error('Load error:', err);
+    }
+  }
+
+  // ── STATS ──
   function updateStats() {
-    document.getElementById('stat-total').textContent     = applicants.length;
-    document.getElementById('stat-interview').textContent = applicants.filter(a => a.status === 'Interview').length;
-    document.getElementById('stat-hired').textContent     = applicants.filter(a => a.status === 'Hired').length;
+    const thisMonth = new Date().toISOString().slice(0, 7);
+    document.getElementById('stat-total').textContent =
+      applicants.length;
+    document.getElementById('stat-interview').textContent =
+      applicants.filter(a => a.application_status === 'Interview').length;
+    document.getElementById('stat-hired').textContent =
+      applicants.filter(a =>
+        a.application_status === 'Hired' &&
+        a.result_date && a.result_date.startsWith(thisMonth)
+      ).length;
   }
 
+  // ── STATUS CLASS ──
+  function statusClass(s) {
+    if (!s) return '';
+    return s.toLowerCase().replace(' ', '-');
+  }
+
+  // ── RENDER TABLE ──
   function renderTable(list) {
     if (!list) list = getFiltered();
     document.getElementById('record-count').textContent =
-      list.length + ' record' + (list.length !== 1 ? 's' : '');
+        list.length + ' record' + (list.length !== 1 ? 's' : '');
     const tbody = document.getElementById('rec-table-body');
     tbody.innerHTML = list.map(a => {
-      const realIdx = applicants.indexOf(a);
-      return `
-        <tr>
-          <td class="name-cell">${a.first} ${a.last}</td>
-          <td class="email-cell">${a.email}</td>
-          <td><span class="pos-badge">${a.position}</span></td>
-          <td class="date-cell">${a.date}</td>
-          <td><span class="status-badge ${statusClass(a.status)}">
-            <span class="status-dot"></span>${a.status}
-          </span></td>
-          <td>
-            <div class="actions">
-              <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
-              <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
-            </div>
-          </td>
-        </tr>`;
+        const realIdx = applicants.indexOf(a);
+        return `
+            <tr>
+                <td class="name-cell">${a.f_name} ${a.l_name}</td>
+                <td class="email-cell">${a.email ?? '—'}</td>
+                <td><span class="pos-badge">${a.pos_name ?? positionMap[String(a.pos_id)] ?? '—'}</span></td>
+                <td class="date-cell">${a.application_date ?? '—'}</td>
+                <td><span class="status-badge ${statusClass(a.application_status)}">
+                    <span class="status-dot"></span>${a.application_status}
+                </span></td>
+                <td>
+                    <div class="actions">
+                        <button class="btn-edit" onclick="openEditModal(${realIdx})">Edit</button>
+                        <button class="btn-delete" onclick="openDelModal(${realIdx})">Delete</button>
+                    </div>
+                </td>
+            </tr>`;
     }).join('');
   }
 
+  // ── FILTER ──
   function getFiltered() {
     const q  = document.getElementById('search-input').value.toLowerCase();
     const sf = document.getElementById('status-filter').value;
     return applicants.filter(a => {
-      const name = (a.first + ' ' + a.last).toLowerCase();
-      return (!q || name.includes(q) || a.email.toLowerCase().includes(q)) &&
-             (!sf || a.status === sf);
+      const name = (a.f_name + ' ' + a.l_name).toLowerCase();
+      return (!q  || name.includes(q) || (a.email ?? '').toLowerCase().includes(q)) &&
+             (!sf || a.application_status === sf);
     });
   }
-
   function filterTable() { renderTable(getFiltered()); }
 
-  function openAddModal() {
+// ── HELPER: get checked documents ──
+function getCheckedDocs() {
+    return Array.from(document.querySelectorAll('input[name="doc"]:checked'))
+        .map(cb => cb.value);
+}
+
+// ── HELPER: set checked documents ──
+function setCheckedDocs(docs) {
+    // uncheck all first
+    document.querySelectorAll('input[name="doc"]').forEach(cb => cb.checked = false);
+    if (!docs) return;
+    // parse if string
+    const list = typeof docs === 'string' ? JSON.parse(docs) : docs;
+    list.forEach(val => {
+        const cb = document.querySelector(`input[name="doc"][value="${val}"]`);
+        if (cb) cb.checked = true;
+    });
+}
+
+// ── OPEN ADD MODAL ──
+function openAddModal() {
     editIdx = null;
     document.getElementById('modal-title').textContent = 'Add Applicant';
-    document.getElementById('m-first').value    = '';
-    document.getElementById('m-last').value     = '';
-    document.getElementById('m-email').value    = '';
-    document.getElementById('m-position').value = '';
-    document.getElementById('m-status').value   = 'Applied';
-    document.getElementById('m-date').value     = new Date().toISOString().split('T')[0];
+    document.getElementById('m-first').value           = '';
+    document.getElementById('m-last').value            = '';
+    document.getElementById('m-mname').value           = '';
+    document.getElementById('m-email').value           = '';
+    document.getElementById('m-vacancy').value         = '';
+    document.getElementById('m-status').value          = 'Applied';
+    document.getElementById('m-date').value            = new Date().toISOString().split('T')[0];
+    document.getElementById('m-interviewed-by').value = ''; // ← add
+    setCheckedDocs([]);
     document.getElementById('app-modal').classList.add('open');
-  }
+}
 
-  function openEditModal(idx) {
+// ── OPEN EDIT MODAL ──
+function openEditModal(idx) {
     editIdx = idx;
     const a = applicants[idx];
-    document.getElementById('modal-title').textContent = 'Edit Applicant';
-    document.getElementById('m-first').value    = a.first;
-    document.getElementById('m-last').value     = a.last;
-    document.getElementById('m-email').value    = a.email;
-    document.getElementById('m-position').value = a.position;
-    document.getElementById('m-status').value   = a.status;
-    const d = new Date(a.date);
-    if (!isNaN(d)) document.getElementById('m-date').value = d.toISOString().split('T')[0];
+    document.getElementById('modal-title').textContent         = 'Edit Applicant';
+    document.getElementById('m-first').value                   = a.f_name             ?? '';
+    document.getElementById('m-last').value                    = a.l_name             ?? '';
+    document.getElementById('m-mname').value                   = a.m_name             ?? '';
+    document.getElementById('m-email').value                   = a.email              ?? '';
+    document.getElementById('m-vacancy').value                 = a.pos_id             ?? '';
+    document.getElementById('m-status').value                  = a.application_status ?? 'Applied';
+    document.getElementById('m-date').value                    = a.application_date   ?? '';
+    document.getElementById('m-interviewed-by').value         = a.interviewed_by      ?? ''; // ← add
+    setCheckedDocs(a.documents_submitted);
     document.getElementById('app-modal').classList.add('open');
-  }
+}
 
-  function closeModal() {
+// ── CLOSE MODAL ──
+function closeModal() {
     document.getElementById('app-modal').classList.remove('open');
+    document.getElementById('m-mname').value           = '';
+    document.getElementById('m-interviewed-by').value = ''; // ← add
+    setCheckedDocs([]);
     editIdx = null;
-  }
+}
 
-  function saveApplicant() {
-    const first    = document.getElementById('m-first').value.trim();
-    const last     = document.getElementById('m-last').value.trim();
-    const email    = document.getElementById('m-email').value.trim();
-    const position = document.getElementById('m-position').value.trim();
-    const status   = document.getElementById('m-status').value;
-    const rawDate  = document.getElementById('m-date').value;
+// ── SAVE ──
+async function saveApplicant() {
+    const first        = document.getElementById('m-first').value.trim();
+    const last         = document.getElementById('m-last').value.trim();
+    const mname        = document.getElementById('m-mname').value.trim();
+    const email        = document.getElementById('m-email').value.trim();
+    const status       = document.getElementById('m-status').value;
+    const rawDate      = document.getElementById('m-date').value;
+    const interviewedBy = document.getElementById('m-interviewed-by').value.trim(); // ← add
+    const docs         = getCheckedDocs();
+
     if (!first || !last) { alert('Please enter first and last name.'); return; }
-    const dateStr = rawDate
-      ? new Date(rawDate).toLocaleDateString('en-US', {year:'numeric', month:'short', day:'numeric'})
-      : '—';
-    const rec = { first, last, email, position, date: dateStr, status };
-    if (editIdx === null) applicants.push(rec);
-    else applicants[editIdx] = rec;
-    closeModal();
-    updateStats();
-    filterTable();
-  }
+    if (!rawDate)        { alert('Please select an application date.'); return; }
 
+    const payload = {
+        f_name:              first,
+        l_name:              last,
+        m_name:              mname          || null,
+        email:               email          || null,
+        pos_id:              document.getElementById('m-vacancy').value || null,
+        application_date:    rawDate,
+        application_status:  status,
+        interviewed_by:      interviewedBy  || null, // ← add
+        documents_submitted: docs.length > 0 ? JSON.stringify(docs) : null,
+    };
+
+    const isEdit = editIdx !== null;
+    if (isEdit) payload.applicant_id = applicants[editIdx].applicant_id;
+
+    try {
+        const res  = await fetch(`${BASE_REC}/${isEdit ? 'update_applicant' : 'add_applicant'}.php`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (json.success) {
+            if (status === 'Hired' && isEdit) {
+                await hireApplicant(applicants[editIdx].applicant_id);
+            } else if (status === 'Hired' && !isEdit) {
+                await hireApplicant(json.applicant_id);
+            }
+            closeModal();
+            loadApplicants();
+        } else {
+            alert('Error: ' + json.error);
+        }
+    } catch (err) {
+        console.error('Save error:', err);
+        alert('Something went wrong. Check the console.');
+    }
+}
+
+// ── HIRE APPLICANT ──
+async function hireApplicant(applicant_id) {
+    try {
+        const res  = await fetch(`${BASE_REC}/hire_applicant.php`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ applicant_id }),
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            if (!json.already_exists) {
+                // show custom hire modal with credentials
+                openHireModal(json.default_username, json.default_password);
+            } else {
+                alert('✅ Status updated to Hired. Employee already exists in the system.');
+            }
+        } else {
+            alert('Hire error: ' + json.error);
+        }
+    } catch (err) {
+        console.error('Hire error:', err);
+    }
+}
+
+// ── OPEN HIRE MODAL ──
+function openHireModal(username, password) {
+    document.getElementById('hire-username').textContent = username;
+    document.getElementById('hire-password').textContent = password;
+    document.getElementById('hire-modal').classList.add('open');
+}
+
+// ── CLOSE HIRE MODAL ──
+function closeHireModal() {
+    document.getElementById('hire-modal').classList.remove('open');
+}
+
+// ── COPY TO CLIPBOARD ──
+function copyText(elementId) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector(`#${elementId}`).nextElementSibling;
+        btn.classList.add('copied');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="20 6 9 12 4 10"/></svg>`;
+        setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+        }, 2000);
+    });
+}
+
+// close hire modal on overlay click
+document.getElementById('hire-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeHireModal();
+});
+
+  // ── DELETE ──
   function openDelModal(idx) {
     deleteIdx = idx;
     document.getElementById('del-modal').classList.add('open');
@@ -616,18 +1043,37 @@
   function closeDelModal() {
     document.getElementById('del-modal').classList.remove('open');
   }
-  function confirmDelete() {
-    if (deleteIdx !== null) applicants.splice(deleteIdx, 1);
-    closeDelModal();
-    updateStats();
-    filterTable();
+  async function confirmDelete() {
+    if (deleteIdx === null) return;
+    try {
+      const res  = await fetch(`${BASE_REC}/delete_applicant.php`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ applicant_id: applicants[deleteIdx].applicant_id }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        closeDelModal();
+        loadApplicants();
+      } else {
+        alert('Error: ' + json.error);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+    }
   }
 
+  // close modals on overlay click
   document.getElementById('app-modal').addEventListener('click', function(e) { if(e.target===this) closeModal(); });
   document.getElementById('del-modal').addEventListener('click', function(e) { if(e.target===this) closeDelModal(); });
 
-  updateStats();
-  renderTable();
+  // ── INIT ──
+  async function init() {
+      await loadVacancyDropdown(); // wait for positions to load first
+      loadApplicants();            // then load applicants so positionMap is ready
+  }
+
+  init();
 </script>
 </body>
 </html>

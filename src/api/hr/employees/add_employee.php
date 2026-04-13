@@ -31,14 +31,19 @@ try {
             dept_id, pos_id,
             emp_date_hired, emp_status,
             emp_schedule, emp_working_hours,
-            user_name, user_password
+            user_name, user_password,
+            emp_basic_salary, emp_contactemergency, emp_contactemergencynum,
+            emp_SSS, emp_TIN, emp_Philhealth, emp_Pagibig, emp_type
         ) VALUES (
             :fname, :lname, :mname, :email,
             :contact, :address, :age,
             :dept_id, :pos_id,
             :date_hired, :status,
             :schedule, :working_hours,
-            :username, :password
+            :username, :password,
+            :basic_salary, :emergency_name, 
+            :emergency_num, :sss, :tin, 
+            :philhealth, :pagibig, :emp_type
         )
     ");
 
@@ -58,6 +63,14 @@ try {
         ':working_hours' => $data['emp_working_hours'] ?? 8,
         ':username'      => $data['user_name'],
         ':password'      => password_hash($data['user_password'], PASSWORD_DEFAULT),
+        ':basic_salary'   => $data['emp_basic_salary']        ?? null,
+        ':emergency_name' => $data['emp_contactemergency']    ?? '',
+        ':emergency_num'  => $data['emp_contactemergencynum'] ?? '',
+        ':sss'            => $data['emp_SSS']                 ?? '',
+        ':tin'            => $data['emp_TIN']                 ?? '',
+        ':philhealth'     => $data['emp_Philhealth']          ?? '',
+        ':pagibig'        => $data['emp_Pagibig']             ?? '',
+        ':emp_type'       => $data['emp_type'] ?? null,
     ]);
 
     echo json_encode(['success' => true, 'emp_id' => $pdo->lastInsertId()]);
