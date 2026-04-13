@@ -34,7 +34,7 @@ try {
         SELECT 
             p.payroll_id,
             p.emp_id,
-            CONCAT(e.emp_fname, ' ', e.emp_lname) as emp_name,
+            CONCAT(e.emp_fname, ' ', e.emp_lname) AS emp_name,
             d.dept_name,
             pos.pos_name,
             p.payperiod_start,
@@ -42,15 +42,18 @@ try {
             p.base_salary,
             p.bonus,
             p.overtime,
+            p.sss,
+            p.philhealth,
+            p.`pag-ibig`  AS pag_ibig,
+            p.tax,
             p.deduction_total,
-            p.deductions_label,
             p.net_salary,
             p.payroll_status,
-            fa.approval_status as fa_status
+            fa.approval_status AS fa_status
         FROM payroll_tbl p
-        JOIN employee_tbl e ON p.emp_id = e.emp_id
-        LEFT JOIN department_tbl d ON e.dept_id = d.dept_id
-        LEFT JOIN position_tbl pos ON e.pos_id = pos.post_id
+        JOIN employee_tbl e   ON p.emp_id  = e.emp_id
+        LEFT JOIN department_tbl d   ON e.dept_id = d.dept_id
+        LEFT JOIN position_tbl  pos  ON e.pos_id  = pos.pos_id
         LEFT JOIN fa_payroll_approval fa ON p.payroll_id = fa.payroll_id
         WHERE " . implode(" AND ", $where) . "
         ORDER BY p.payperiod_start DESC
@@ -61,7 +64,7 @@ try {
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     echo json_encode([
-        'status' => 'success',
+        'status'  => 'success',
         'records' => $records
     ]);
     

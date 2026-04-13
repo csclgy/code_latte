@@ -1,3 +1,4 @@
+<?php require_once '../src/api/auth/check_session.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,12 +51,8 @@
       padding: 0 20px 28px;
       border-bottom: 1px solid var(--border);
     }
-    .logo-icon {
-      width: 34px; height: 34px;
-      background: var(--accent); border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: 15px;
-    }
+    .logo-icon { width:34px; height:34px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
     .logo-text .name { font-family: 'DM Serif Display', serif; font-size: 15px; line-height:1.1; }
     .logo-text .sub  { font-size: 11px; color: var(--muted); }
     nav { flex: 1; padding: 20px 0; }
@@ -400,6 +397,57 @@
       from { opacity:0; transform: translateY(-8px); }
       to   { opacity:1; transform: translateY(0); }
     }
+
+    /* ── EXPORT DROPDOWN ── */
+.export-wrap {
+    position: relative;
+}
+.export-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(44,36,22,.12);
+    min-width: 210px;
+    z-index: 50;
+    overflow: hidden;
+    animation: fadeDown .15s ease;
+}
+.export-menu.open { display: block; }
+
+@keyframes fadeDown {
+    from { opacity:0; transform: translateY(-6px); }
+    to   { opacity:1; transform: translateY(0); }
+}
+
+.export-menu button {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: background .12s;
+}
+.export-menu button:last-child { border-bottom: none; }
+.export-menu button:hover { background: var(--bg); }
+.export-menu button span {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 2px;
+}
   </style>
 </head>
 <body>
@@ -407,7 +455,9 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="logo">
-    <div class="logo-icon">{}&#x2609;</div>
+    <div class="logo-icon">
+      <img src="../assets/images/code_latte.png" alt="Code Latte Logo" onerror="this.style.display='none'; this.parentElement.textContent='☕';">
+    </div>
     <div class="logo-text">
       <div class="name">Code Latte</div>
       <div class="sub">HR System</div>
@@ -436,11 +486,20 @@
     </a>
   </nav>
   <div class="user-block">
-    <div class="avatar">A</div>
-    <div class="user-info">
-      <div class="uname">Admin</div>
-      <div class="urole">Store Manager</div>
+    <div class="avatar">
+      <?= strtoupper(substr($_SESSION['emp_fname'] ?? 'A', 0, 1)) ?>
     </div>
+    <div class="user-info">
+      <div class="uname"><?= htmlspecialchars($_SESSION['emp_fname'] ?? 'Admin') ?></div>
+      <div class="urole"><?= htmlspecialchars($_SESSION['pos_name'] ?? 'Staff') ?></div>
+    </div>
+    <a href="/hrm_module/src/api/auth/logout.php" title="Logout" style="margin-left:auto; color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </a>
   </div>
 </aside>
 
@@ -449,13 +508,39 @@
   <h1>Attendance Tracking</h1>
 
   <!-- SECTION HEADER -->
-  <div class="section-header">
+<div class="section-header">
     <span class="section-title">Attendance</span>
     <div class="header-actions">
-      <button class="btn-export" onclick="exportCSV()">Export</button>
-      <button class="btn-log" onclick="openLogModal()">+ Log Attendance</button>
+
+        <!-- Export dropdown wrapper -->
+        <div class="export-wrap" id="export-wrap">
+            <button class="btn-export" onclick="toggleExportMenu()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export CSV
+            </button>
+            <div class="export-menu" id="export-menu">
+                <button onclick="exportCSV('current')">
+                    📋 Export Current View
+                    <span>Exports filtered records</span>
+                </button>
+                <button onclick="exportCSV('all')">
+                    📦 Export All Records
+                    <span>Exports everything</span>
+                </button>
+                <button onclick="exportCSV('today')">
+                    📅 Export Today Only
+                    <span>Today's attendance</span>
+                </button>
+            </div>
+        </div>
+
+        <button class="btn-log" onclick="openLogModal()">+ Log Attendance</button>
     </div>
-  </div>
+</div>
 
   <!-- STAT CARDS -->
   <div class="stats">
@@ -633,12 +718,33 @@
 
   // ── STATS ──
   function updateStats() {
-    const today = new Date().toISOString().split('T')[0];
-    const todayRecords = records.filter(r => r.attendance_date === today);
-    document.getElementById('count-present').textContent = todayRecords.filter(r => r.status === 'Present').length;
-    document.getElementById('count-absent').textContent  = todayRecords.filter(r => r.status === 'Absent').length;
-    document.getElementById('count-late').textContent    = todayRecords.filter(r => r.status === 'Late').length;
-    document.getElementById('count-leave').textContent   = todayRecords.filter(r => r.status === 'On Leave').length;
+      const today = new Date().toLocaleDateString('en-CA');
+
+      const todayRecords = records.filter(r =>
+          (r.attendance_date ?? '').substring(0, 10) === today
+      );
+
+      const presentCount  = todayRecords.filter(r => r.status === 'Present').length;
+      const absentCount   = todayRecords.filter(r => r.status === 'Absent').length;
+      const lateCount     = todayRecords.filter(r => r.status === 'Late').length;
+      const leaveCount    = todayRecords.filter(r => r.status === 'On Leave').length;
+
+      document.getElementById('count-present').textContent = presentCount;
+      document.getElementById('count-absent').textContent  = absentCount;
+      document.getElementById('count-late').textContent    = lateCount;
+      document.getElementById('count-leave').textContent   = leaveCount;
+
+      // Show last logged date if no records today
+      if (todayRecords.length === 0 && records.length > 0) {
+          const lastDate = (records[0].attendance_date ?? '').substring(0, 10);
+          document.querySelectorAll('.stat-card .desc').forEach(el => {
+              el.textContent = `Last: ${lastDate}`;
+          });
+      } else {
+          document.querySelectorAll('.stat-card .desc').forEach(el => {
+              el.textContent = 'Today';
+          });
+      }
   }
 
   // ── RENDER TABLE ──
@@ -835,23 +941,94 @@ function renderTable(list) {
     }
   }
 
-  // ── EXPORT CSV ──
-  function exportCSV() {
-    const headers = ['Date','Name','Schedule','Time In','Time Out','Hours','Status'];
-    const rows = records.map(r => [
-      r.attendance_date,
-      r.emp_fname + ' ' + r.emp_lname,
-      r.emp_schedule,
-      formatTime(r.time_in),
-      formatTime(r.time_out),
-      calcHours(r.time_in, r.time_out),
-      r.status
+ // ── TOGGLE EXPORT MENU ──
+function toggleExportMenu() {
+    const menu = document.getElementById('export-menu');
+    menu.classList.toggle('open');
+}
+
+// Close export menu when clicking outside
+document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('export-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('export-menu').classList.remove('open');
+    }
+});
+
+// ── EXPORT CSV ──
+function exportCSV(mode = 'current') {
+    let exportRecords = [];
+    const today = new Date().toLocaleDateString('en-CA');
+
+    if (mode === 'all') {
+        exportRecords = records;
+    } else if (mode === 'today') {
+        exportRecords = records.filter(r =>
+            (r.attendance_date ?? '').substring(0, 10) === today
+        );
+    } else {
+        // current = filtered view
+        const q  = document.getElementById('search-input').value.toLowerCase();
+        const df = document.getElementById('date-filter').value;
+        const sf = document.getElementById('status-filter').value;
+        exportRecords = records.filter(r => {
+            const name = (r.emp_fname + ' ' + r.emp_lname).toLowerCase();
+            return (!q  || name.includes(q)) &&
+                   (!df || r.attendance_date === df) &&
+                   (!sf || r.status === sf);
+        });
+    }
+
+    if (!exportRecords.length) {
+        alert('No records to export.');
+        document.getElementById('export-menu').classList.remove('open');
+        return;
+    }
+
+    const headers = [
+        'Date',
+        'Employee Name',
+        'Role',
+        'Shift',
+        'Time In',
+        'Time Out',
+        'Hours Worked',
+        'Late (mins)',
+        'Status',
+        'Remarks'
+    ];
+
+    const rows = exportRecords.map(r => [
+        r.attendance_date                        ?? '—',
+        (r.emp_fname + ' ' + r.emp_lname),
+        r.emp_role                               ?? '—',
+        r.emp_schedule                           ?? '—',
+        formatTime(r.time_in),
+        formatTime(r.time_out),
+        calcHours(r.time_in, r.time_out, r.late_minutes),
+        r.late_minutes > 0 ? r.late_minutes     : '0',
+        r.status                                 ?? '—',
+        r.remarks                                ?? '',
     ]);
-    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-    const a   = document.createElement('a');
-    a.href    = 'data:text/csv,' + encodeURIComponent(csv);
-    a.download = 'attendance.csv';
+
+    // Build CSV with BOM for Excel compatibility
+    const csv = [headers, ...rows]
+        .map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+    // Smart filename based on mode
+    const modeTag   = mode === 'today' ? `_${today}` : mode === 'all' ? '_all-records' : '_filtered';
+    const filename  = `attendance${modeTag}_${today}.csv`;
+
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
     a.click();
+    URL.revokeObjectURL(url);
+
+    document.getElementById('export-menu').classList.remove('open');
   }
 
   // close modals on overlay click

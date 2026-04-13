@@ -1,7 +1,4 @@
-<?php
-session_start();
-require_once '../src/config/db.php';
-?>
+<?php require_once '../src/api/auth/check_session.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +6,6 @@ require_once '../src/config/db.php';
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Code Latte – Payroll Management</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
-  <!-- jsPDF for PDF export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
   <style>
@@ -101,10 +97,12 @@ require_once '../src/config/db.php';
     .btn-edit:hover { background:var(--border); }
     .btn-delete { padding:5px 14px; border-radius:6px; border:1px solid #f0d0d0; background:#fff8f8; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--deduct); cursor:pointer; transition:background .12s; }
     .btn-delete:hover { background:#fceaea; }
+
+    /* ── MODALS ── */
     .modal-overlay { display:none; position:fixed; inset:0; background:rgba(44,36,22,.45); z-index:100; align-items:center; justify-content:center; padding:20px; }
     .modal-overlay.open { display:flex; }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-    .modal { background:#fff; border-radius:var(--radius); padding:28px 32px; width:600px; max-height:80vh; box-shadow:0 8px 40px rgba(44,36,22,.18); animation:fadeUp .22s ease; overflow-y:auto; }
+    .modal { background:#fff; border-radius:var(--radius); padding:28px 32px; width:620px; max-height:88vh; box-shadow:0 8px 40px rgba(44,36,22,.18); animation:fadeUp .22s ease; overflow-y:auto; }
     .modal.wide { width:800px; }
     .modal-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
     .modal-top h2 { font-family:'DM Serif Display',serif; font-size:20px; font-weight:400; }
@@ -116,14 +114,52 @@ require_once '../src/config/db.php';
     .modal-group input,.modal-group select { padding:9px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg); font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text); outline:none; width:100%; transition:border-color .15s; }
     .modal-group input:focus,.modal-group select:focus { border-color:var(--accent); }
     .modal-group select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a7f6e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+
+    /* Readonly computed field */
+    input.computed { background:var(--sidebar) !important; cursor:default; font-weight:600; }
+
+    /* Attendance meta strip */
+    .att-meta {
+      grid-column:1/-1;
+      display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+      background:var(--bg); border:1px solid var(--border);
+      border-radius:8px; padding:12px 16px;
+    }
+    .att-cell { display:flex; flex-direction:column; gap:3px; }
+    .att-cell label { font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+    .att-cell span  { font-size:14px; font-weight:600; color:var(--text); }
+    .att-cell span.loading { color:var(--muted); font-style:italic; font-weight:400; font-size:12px; }
+
+    /* Deductions breakdown block */
+    .ded-block { grid-column:1/-1; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+    .ded-block-header {
+      background:var(--sidebar); padding:9px 14px;
+      display:flex; align-items:center; justify-content:space-between;
+      font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted);
+    }
+    .ded-block-header .auto-badge { font-size:10px; font-weight:600; background:#e8f5ec; color:var(--approved); padding:2px 8px; border-radius:20px; text-transform:none; letter-spacing:0; }
+    .ded-grid { display:grid; grid-template-columns:1fr 1fr; }
+    .ded-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border); gap:10px; }
+    .ded-row:nth-child(odd) { border-right:1px solid var(--border); }
+    .ded-row:last-child,.ded-row:nth-last-child(2):nth-child(odd) { border-bottom:none; }
+    .ded-row label { font-size:12px; font-weight:600; color:var(--text); min-width:80px; }
+    .ded-row input { padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:var(--sidebar); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:var(--text); outline:none; width:100%; text-align:right; cursor:default; }
+    .ded-total-row { display:flex; align-items:center; justify-content:space-between; padding:11px 14px; background:var(--bg); border-top:2px solid var(--border); }
+    .ded-total-row .dtl { font-size:13px; font-weight:600; color:var(--text); }
+    .ded-total-row .dtv { font-family:'DM Serif Display',serif; font-size:18px; color:var(--deduct); }
+
+    /* Net preview */
     .net-preview { grid-column:1/-1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; }
     .net-preview .net-label { font-size:13px; color:var(--muted); }
     .net-preview .net-value { font-family:'DM Serif Display',serif; font-size:20px; color:var(--text); }
+
     .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; }
     .btn-cancel-modal { padding:9px 18px; border-radius:8px; border:1px solid var(--border); background:transparent; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; }
     .btn-cancel-modal:hover { background:var(--border); }
     .btn-save-modal { padding:9px 22px; border-radius:8px; border:none; background:var(--accent); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:#fff; cursor:pointer; transition:background .15s; }
     .btn-save-modal:hover { background:#3e3010; }
+
+    /* View Details Modal */
     .confirm-modal { width:360px; text-align:center; }
     .confirm-modal p { font-size:13px; color:var(--muted); margin-bottom:22px; }
     .btn-confirm-delete { padding:9px 22px; border-radius:8px; border:none; background:var(--deduct); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; color:#fff; cursor:pointer; }
@@ -139,6 +175,13 @@ require_once '../src/config/db.php';
     .detail-cell { display:flex; flex-direction:column; gap:4px; }
     .detail-cell label { font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
     .detail-cell value { font-size:13px; font-weight:500; color:var(--text); }
+
+    /* Deduction breakdown inside view details */
+    .ded-detail-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; grid-column:1/-1; background:var(--sidebar); border-radius:6px; padding:10px; }
+    .ded-detail-item { display:flex; flex-direction:column; gap:3px; }
+    .ded-detail-item label { font-size:10px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+    .ded-detail-item value { font-size:13px; font-weight:600; color:var(--deduct); }
+
     .toast { position:fixed; bottom:20px; right:20px; background:var(--accent); color:#fff; padding:12px 20px; border-radius:8px; box-shadow:var(--shadow); font-size:13px; font-weight:500; z-index:200; opacity:0; transform:translateY(20px); transition:opacity .3s,transform .3s; }
     .toast.show    { opacity:1; transform:translateY(0); }
     .toast.error   { background:var(--deduct); }
@@ -180,11 +223,20 @@ require_once '../src/config/db.php';
     </a>
   </nav>
   <div class="user-block">
-    <div class="avatar">A</div>
-    <div class="user-info">
-      <div class="uname">Admin</div>
-      <div class="urole">Store Manager</div>
+    <div class="avatar">
+      <?= strtoupper(substr($_SESSION['emp_fname'] ?? 'A', 0, 1)) ?>
     </div>
+    <div class="user-info">
+      <div class="uname"><?= htmlspecialchars($_SESSION['emp_fname'] ?? 'Admin') ?></div>
+      <div class="urole"><?= htmlspecialchars($_SESSION['pos_name'] ?? 'Staff') ?></div>
+    </div>
+    <a href="/hrm_module/src/api/auth/logout.php" title="Logout" style="margin-left:auto; color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </a>
   </div>
 </aside>
 
@@ -194,10 +246,11 @@ require_once '../src/config/db.php';
     <span class="section-title">Employee Payroll Summary</span>
     <div class="header-actions">
       <button class="btn-export" onclick="exportCSV()">Export CSV</button>
-      <button class="btn-pdf" onclick="exportPDF()">Export PDF</button>
-      <button class="btn-add" onclick="openAddModal()">+ Add Payroll</button>
+      <button class="btn-pdf"    onclick="exportPDF()">Export PDF</button>
+      <button class="btn-add"    onclick="openAddModal()">+ Add Payroll</button>
     </div>
   </div>
+
   <div class="stats">
     <div class="stat-card total">
       <div class="label">Total Net Salary (All)</div>
@@ -215,6 +268,7 @@ require_once '../src/config/db.php';
       <div class="desc"  id="stat-pending-count">0 records</div>
     </div>
   </div>
+
   <div class="period-panel">
     <div class="period-label">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -247,6 +301,7 @@ require_once '../src/config/db.php';
       </div>
     </div>
   </div>
+
   <div class="records-panel">
     <div class="records-header">
       <div class="records-title">
@@ -271,7 +326,7 @@ require_once '../src/config/db.php';
   </div>
 </main>
 
-<!-- ADD / EDIT MODAL -->
+<!-- ══════════ ADD / EDIT MODAL ══════════ -->
 <div class="modal-overlay" id="pay-modal">
   <div class="modal">
     <div class="modal-top">
@@ -279,53 +334,107 @@ require_once '../src/config/db.php';
       <button class="btn-close" onclick="closeModal()">&#10005;</button>
     </div>
     <div class="modal-grid">
+
+      <!-- Employee -->
       <div class="modal-group" style="grid-column:1/-1;">
         <label>Employee *</label>
-        <select id="m-employee" onchange="loadEmployeeInfo()">
+        <select id="m-employee" onchange="onEmployeeOrDateChange()">
           <option value="">Select employee...</option>
         </select>
       </div>
+
+      <!-- Dept / Position (read-only) -->
       <div class="modal-group">
         <label>Department</label>
-        <input type="text" id="m-dept" readonly style="background:var(--sidebar);"/>
+        <input type="text" id="m-dept" readonly class="computed"/>
       </div>
       <div class="modal-group">
         <label>Position</label>
-        <input type="text" id="m-position" readonly style="background:var(--sidebar);"/>
+        <input type="text" id="m-position" readonly class="computed"/>
       </div>
+
+      <!-- Pay Period — both fire the auto-compute -->
       <div class="modal-group">
         <label>Period Start *</label>
-        <input type="date" id="m-period-start"/>
+        <input type="date" id="m-period-start" onchange="onEmployeeOrDateChange()"/>
       </div>
       <div class="modal-group">
         <label>Period End *</label>
-        <input type="date" id="m-period-end"/>
+        <input type="date" id="m-period-end" onchange="onEmployeeOrDateChange()"/>
       </div>
-      <div class="modal-group">
-        <label>Base Salary (&#8369;) *</label>
-        <input type="number" id="m-base" placeholder="0" min="0" oninput="calcNet()"/>
+
+      <!-- Attendance meta strip -->
+      <div class="att-meta">
+        <div class="att-cell">
+          <label>Days Attended (Present/Late)</label>
+          <span id="m-days-attended">—</span>
+        </div>
+        <div class="att-cell">
+          <label>Working Days in Cut-off</label>
+          <span id="m-working-days">—</span>
+        </div>
+        <div class="att-cell">
+          <label>Daily Rate</label>
+          <span id="m-daily-rate">—</span>
+        </div>
       </div>
+
+      <!-- Base Salary — read-only, auto-computed -->
+      <div class="modal-group" style="grid-column:1/-1;">
+        <label>
+          Base Salary (&#8369;) — computed from attendance
+          <span id="m-comp-status" style="font-size:11px;color:var(--muted);font-style:italic;margin-left:6px;"></span>
+        </label>
+        <input type="number" id="m-base" readonly class="computed" placeholder="Select employee and cut-off dates"/>
+      </div>
+
+      <!-- Bonus / Overtime — editable, re-trigger net recalc -->
       <div class="modal-group">
         <label>Bonus (&#8369;)</label>
-        <input type="number" id="m-bonus" placeholder="0" min="0" oninput="calcNet()"/>
+        <input type="number" id="m-bonus" placeholder="0" min="0" step="0.01" oninput="recalcNet()"/>
       </div>
       <div class="modal-group">
         <label>Overtime (&#8369;)</label>
-        <input type="number" id="m-ot" placeholder="0" min="0" oninput="calcNet()"/>
+        <input type="number" id="m-ot" placeholder="0" min="0" step="0.01" oninput="recalcNet()"/>
       </div>
-      <div class="modal-group">
-        <label>Deductions (&#8369;)</label>
-        <input type="number" id="m-deductions" placeholder="0" min="0" oninput="calcNet()"/>
+
+      <!-- Deductions Breakdown Block -->
+      <div class="ded-block">
+        <div class="ded-block-header">
+          Deductions Breakdown
+          <span class="auto-badge">Auto-computed</span>
+        </div>
+        <div class="ded-grid">
+          <div class="ded-row">
+            <label>SSS</label>
+            <input type="number" id="m-sss"        readonly class="computed" placeholder="0.00"/>
+          </div>
+          <div class="ded-row">
+            <label>PhilHealth</label>
+            <input type="number" id="m-philhealth"  readonly class="computed" placeholder="0.00"/>
+          </div>
+          <div class="ded-row">
+            <label>Pag-IBIG</label>
+            <input type="number" id="m-pagibig"     readonly class="computed" placeholder="0.00"/>
+          </div>
+          <div class="ded-row">
+            <label>Tax (BIR)</label>
+            <input type="number" id="m-tax"         readonly class="computed" placeholder="0.00"/>
+          </div>
+        </div>
+        <div class="ded-total-row">
+          <span class="dtl">Total Deductions</span>
+          <span class="dtv" id="m-deduction-total">&#8369;0.00</span>
+        </div>
       </div>
-      <div class="modal-group" style="grid-column:1/-1;">
-        <label>Deductions Label</label>
-        <input type="text" id="m-deductions-label" placeholder="e.g., Tax, SSS, PhilHealth"/>
-      </div>
+
+      <!-- Net Salary Preview -->
       <div class="net-preview">
-        <span class="net-label">Net Salary</span>
+        <span class="net-label">Net Salary (Preview)</span>
         <span class="net-value" id="m-net-preview">&#8369;0.00</span>
       </div>
-    </div>
+
+    </div><!-- /modal-grid -->
     <div class="modal-actions">
       <button class="btn-cancel-modal" onclick="closeModal()">Cancel</button>
       <button class="btn-save-modal"   onclick="saveRecord()">Save Record</button>
@@ -333,7 +442,7 @@ require_once '../src/config/db.php';
   </div>
 </div>
 
-<!-- VIEW DETAILS MODAL -->
+<!-- ══════════ VIEW DETAILS MODAL ══════════ -->
 <div class="modal-overlay" id="view-modal">
   <div class="modal wide">
     <div class="modal-top">
@@ -344,7 +453,7 @@ require_once '../src/config/db.php';
   </div>
 </div>
 
-<!-- DELETE CONFIRM MODAL -->
+<!-- ══════════ DELETE CONFIRM ══════════ -->
 <div class="modal-overlay" id="del-modal">
   <div class="modal confirm-modal">
     <div class="modal-top" style="justify-content:center;margin-bottom:10px;">
@@ -352,7 +461,7 @@ require_once '../src/config/db.php';
     </div>
     <p>This action cannot be undone. The record will be permanently removed.</p>
     <div class="modal-actions" style="justify-content:center;">
-      <button class="btn-cancel-modal"  onclick="closeDelModal()">Cancel</button>
+      <button class="btn-cancel-modal"   onclick="closeDelModal()">Cancel</button>
       <button class="btn-confirm-delete" onclick="confirmDelete()">Yes, Delete</button>
     </div>
   </div>
@@ -365,7 +474,7 @@ require_once '../src/config/db.php';
 
   let records=[], employees=[], editId=null, deleteId=null, viewEmpId=null;
 
-  function fmt(n){ return '\u20B1'+Number(n).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function fmt(n){ return '\u20B1'+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 
   function showToast(msg,type='success'){
     const t=document.getElementById('toast');
@@ -387,7 +496,6 @@ require_once '../src/config/db.php';
         }));
         populateEmployeeSelects();
       } else { showToast(data.message||'Failed to load employees','error'); }
-      
     }catch(err){ console.error(err); showToast('Error loading employees','error'); }
   }
 
@@ -405,12 +513,6 @@ require_once '../src/config/db.php';
     });
   }
 
-  function loadEmployeeInfo(){
-    const emp=employees.find(e=>e.emp_id==document.getElementById('m-employee').value);
-    document.getElementById('m-dept').value    = emp ? emp.dept_name||'N/A' : '';
-    document.getElementById('m-position').value= emp ? emp.pos_name ||'N/A' : '';
-  }
-
   /* ── LOAD PAYROLLS ──────────────────────────────────────────── */
   async function loadPayrolls(){
     try{
@@ -420,49 +522,44 @@ require_once '../src/config/db.php';
       const status=document.getElementById('filter-status').value;
       const emp   =document.getElementById('filter-employee').value;
 
-      if(start)           params.append('period_start',start);
-      if(end)             params.append('period_end',  end);
-      if(emp!=='All')     params.append('emp_id',      emp);
-      
+      if(start)       params.append('period_start',start);
+      if(end)         params.append('period_end',  end);
+      if(emp!=='All') params.append('emp_id',      emp);
       const statusMap={'Pending':'Draft','Sent':'Submitted','Approved':'Approved'};
-      if(status!=='All')  params.append('payroll_status', statusMap[status]||status);
+      if(status!=='All') params.append('payroll_status', statusMap[status]||status);
 
       const res  = await fetch('../src/api/hr/payroll/get_payroll.php?'+params);
       const data = await res.json();
-      
+
       if(data.status==='success'){
         records=data.records.map(r=>({
-          payroll_id:       r.payroll_id,
-          emp_id:           r.emp_id,
-          emp_fname:        r.emp_name.split(' ')[0],
-          emp_lname:        r.emp_name.split(' ').slice(1).join(' '),
-          dept_name:        r.dept_name,
-          pos_name:         r.pos_name,
-          payperiod_start:  r.payperiod_start,
-          payperiod_end:    r.payperiod_end,
-          base_salary:      r.base_salary,
-          bonus:            r.bonus,
-          overtime:         r.overtime,
-          deduction_total:  r.deduction_total,
-          deductions_label: r.deductions_label,
-          net_salary:       r.net_salary,
-          payroll_status:   r.payroll_status,
-          approval_status:  mapPayrollStatus(r.payroll_status)
+          payroll_id:      r.payroll_id,
+          emp_id:          r.emp_id,
+          emp_fname:       r.emp_name.split(' ')[0],
+          emp_lname:       r.emp_name.split(' ').slice(1).join(' '),
+          dept_name:       r.dept_name,
+          pos_name:        r.pos_name,
+          payperiod_start: r.payperiod_start,
+          payperiod_end:   r.payperiod_end,
+          base_salary:     r.base_salary,
+          bonus:           r.bonus,
+          overtime:        r.overtime,
+          sss:             r.sss        || 0,
+          philhealth:      r.philhealth || 0,
+          pag_ibig:        r.pag_ibig   || 0,
+          tax:             r.tax        || 0,
+          deduction_total: r.deduction_total,
+          net_salary:      r.net_salary,
+          payroll_status:  r.payroll_status,
+          approval_status: mapStatus(r.payroll_status)
         }));
         applyFilters();
       } else { showToast(data.message||'Failed to load payrolls','error'); }
-      
     }catch(err){ showToast('Error loading payrolls','error'); console.error(err); }
   }
 
-  function mapPayrollStatus(payrollStatus) {
-    const statusMap = {
-      'Draft': 'Pending',
-      'Submitted': 'Sent',
-      'Approved': 'Approved',
-      'Rejected': 'Pending'
-    };
-    return statusMap[payrollStatus] || payrollStatus;
+  function mapStatus(s){
+    return {Draft:'Pending',Submitted:'Sent',Approved:'Approved',Rejected:'Pending'}[s]||s;
   }
 
   /* ── FILTER + GROUP ─────────────────────────────────────────── */
@@ -472,10 +569,10 @@ require_once '../src/config/db.php';
     const s =document.getElementById('filter-start').value;
     const e =document.getElementById('filter-end').value;
     const filtered=records.filter(r=>{
-      if(sf!=='All'&&r.approval_status!==sf)     return false;
-      if(ef!=='All'&&r.emp_id!=ef)               return false;
-      if(s&&r.payperiod_start<s)                 return false;
-      if(e&&r.payperiod_end>e)                   return false;
+      if(sf!=='All'&&r.approval_status!==sf)  return false;
+      if(ef!=='All'&&r.emp_id!=ef)            return false;
+      if(s&&r.payperiod_start<s)              return false;
+      if(e&&r.payperiod_end>e)                return false;
       return true;
     });
     const grouped={};
@@ -487,7 +584,7 @@ require_once '../src/config/db.php';
       };
       grouped[r.emp_id].payrolls.push(r);
       grouped[r.emp_id].total_net+=parseFloat(r.net_salary);
-      if(r.approval_status==='Pending')  grouped[r.emp_id].pending_count++;
+      if(r.approval_status==='Pending')       grouped[r.emp_id].pending_count++;
       else if(r.approval_status==='Sent')     grouped[r.emp_id].sent_count++;
       else if(r.approval_status==='Approved') grouped[r.emp_id].approved_count++;
     });
@@ -520,9 +617,6 @@ require_once '../src/config/db.php';
       if(g.pending_count >0) badges.push(`<span class="status-badge pending"><span class="status-dot"></span>${g.pending_count} Pending</span>`);
       if(g.sent_count    >0) badges.push(`<span class="status-badge sent"><span class="status-dot"></span>${g.sent_count} Sent</span>`);
       if(g.approved_count>0) badges.push(`<span class="status-badge approved"><span class="status-dot"></span>${g.approved_count} Approved</span>`);
-      
-      const showSendButton = g.pending_count > 0;
-      
       return `
         <tr data-id="${g.emp_id}">
           <td class="name-cell">${g.emp_fname} ${g.emp_lname}</td>
@@ -534,7 +628,7 @@ require_once '../src/config/db.php';
           <td>
             <div class="actions">
               <button class="btn-view" onclick="viewDetails(${g.emp_id})">View Details</button>
-              ${showSendButton?`<button class="btn-send-finance" onclick="sendEmployeeToFinance(${g.emp_id})">Send to Finance</button>`:''}
+              ${g.pending_count>0?`<button class="btn-send-finance" onclick="sendEmployeeToFinance(${g.emp_id})">Send to Finance</button>`:''}
             </div>
           </td>
         </tr>`;
@@ -551,10 +645,7 @@ require_once '../src/config/db.php';
     document.getElementById('view-details-content').innerHTML=`
       <div class="details-list">
         ${empPayrolls.map(p=>{
-          const isPending = p.approval_status === 'Pending';
-          const isSent = p.approval_status === 'Sent';
-          const isApproved = p.approval_status === 'Approved';
-          
+          const isPending=p.approval_status==='Pending';
           return `
           <div class="detail-item">
             <div class="detail-header">
@@ -565,18 +656,27 @@ require_once '../src/config/db.php';
               <div class="detail-cell"><label>Base Salary</label><value>${fmt(p.base_salary)}</value></div>
               <div class="detail-cell"><label>Bonus</label><value>${fmt(p.bonus||0)}</value></div>
               <div class="detail-cell"><label>Overtime</label><value>${fmt(p.overtime||0)}</value></div>
-              <div class="detail-cell"><label>Deductions</label><value>${fmt(p.deduction_total||0)}</value></div>
-              <div class="detail-cell" style="grid-column:1/-1;"><label>Deductions Label</label><value>${p.deductions_label||'N/A'}</value></div>
-              <div class="detail-cell" style="grid-column:1/-1;background:var(--sidebar);padding:8px;border-radius:6px;">
-                <label>Net Salary</label><value style="font-weight:600;font-size:16px;">${fmt(p.net_salary)}</value>
+              <div class="detail-cell"><label>Net Salary</label><value style="font-weight:700;font-size:14px;">${fmt(p.net_salary)}</value></div>
+              <!-- Itemized deductions row -->
+              <div style="grid-column:1/-1;">
+                <div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Deductions Breakdown</div>
+                <div class="ded-detail-grid">
+                  <div class="ded-detail-item"><label>SSS</label><value>${fmt(p.sss||0)}</value></div>
+                  <div class="ded-detail-item"><label>PhilHealth</label><value>${fmt(p.philhealth||0)}</value></div>
+                  <div class="ded-detail-item"><label>Pag-IBIG</label><value>${fmt(p.pag_ibig||0)}</value></div>
+                  <div class="ded-detail-item"><label>Tax (BIR)</label><value>${fmt(p.tax||0)}</value></div>
+                </div>
+                <div style="display:flex;justify-content:flex-end;margin-top:6px;font-size:12px;color:var(--deduct);font-weight:600;">
+                  Total Deductions: ${fmt(p.deduction_total||0)}
+                </div>
               </div>
             </div>
             <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
               ${isPending
                 ?`<button class="btn-send-finance" onclick="sendToFinance(${p.payroll_id});closeViewModal();">Send to Finance</button>
-                  <button class="btn-edit"         onclick="openEditFromView(${p.payroll_id})">Edit</button>
-                  <button class="btn-delete"        onclick="deleteFromView(${p.payroll_id})">Delete</button>`
-                :`<span style="color:var(--muted);font-size:12px;">${isSent ? 'Sent to Finance - Cannot edit' : 'Approved - Cannot edit'}</span>`
+                  <button class="btn-edit"          onclick="openEditFromView(${p.payroll_id})">Edit</button>
+                  <button class="btn-delete"         onclick="deleteFromView(${p.payroll_id})">Delete</button>`
+                :`<span style="color:var(--muted);font-size:12px;">${p.approval_status==='Sent'?'Sent to Finance':'Approved'} — Cannot edit</span>`
               }
             </div>
           </div>`;
@@ -591,24 +691,18 @@ require_once '../src/config/db.php';
 
   function formatDate(s){
     if(!s) return 'N/A';
-    const d=new Date(s);
+    const d=new Date(s+'T00:00:00');
     return isNaN(d)?s:d.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'});
   }
 
-  function calcNet(){
-    const b=parseFloat(document.getElementById('m-base').value)||0;
-    const bo=parseFloat(document.getElementById('m-bonus').value)||0;
-    const ot=parseFloat(document.getElementById('m-ot').value)||0;
-    const d=parseFloat(document.getElementById('m-deductions').value)||0;
-    document.getElementById('m-net-preview').textContent=fmt(Math.max(0,b+bo+ot-d));
-  }
+  /* ══════════════════════════════════════════════════════════════
+     MODAL — AUTO-COMPUTE BASE SALARY + DEDUCTIONS
+  ══════════════════════════════════════════════════════════════ */
 
   function openAddModal(){
     editId=null;
     document.getElementById('modal-title').textContent='Add Payroll Record';
-    ['m-employee','m-dept','m-position','m-period-start','m-period-end',
-     'm-base','m-bonus','m-ot','m-deductions','m-deductions-label'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('m-net-preview').textContent='\u20B10.00';
+    clearModalFields();
     document.getElementById('pay-modal').classList.add('open');
   }
 
@@ -616,21 +710,112 @@ require_once '../src/config/db.php';
     const r=records.find(rec=>rec.payroll_id==id); if(!r) return;
     editId=id;
     document.getElementById('modal-title').textContent='Edit Payroll Record';
-    document.getElementById('m-employee').value        =r.emp_id;
-    document.getElementById('m-dept').value            =r.dept_name||'N/A';
-    document.getElementById('m-position').value        =r.pos_name ||'N/A';
-    document.getElementById('m-period-start').value    =r.payperiod_start;
-    document.getElementById('m-period-end').value      =r.payperiod_end;
-    document.getElementById('m-base').value            =r.base_salary;
-    document.getElementById('m-bonus').value           =r.bonus||'';
-    document.getElementById('m-ot').value              =r.overtime||'';
-    document.getElementById('m-deductions').value      =r.deduction_total||'';
-    document.getElementById('m-deductions-label').value=r.deductions_label||'';
-    calcNet();
+    document.getElementById('m-employee').value       =r.emp_id;
+    // fill dept/pos from local employees array
+    const emp=employees.find(e=>e.emp_id==r.emp_id);
+    document.getElementById('m-dept').value           =emp?emp.dept_name||'N/A':r.dept_name||'';
+    document.getElementById('m-position').value       =emp?emp.pos_name ||'N/A':r.pos_name ||'';
+    document.getElementById('m-period-start').value   =r.payperiod_start;
+    document.getElementById('m-period-end').value     =r.payperiod_end;
+    document.getElementById('m-base').value           =r.base_salary;
+    document.getElementById('m-bonus').value          =r.bonus||'';
+    document.getElementById('m-ot').value             =r.overtime||'';
+    document.getElementById('m-sss').value            =r.sss||'';
+    document.getElementById('m-philhealth').value     =r.philhealth||'';
+    document.getElementById('m-pagibig').value        =r.pag_ibig||'';
+    document.getElementById('m-tax').value            =r.tax||'';
+    // meta strip — re-fetch to show attendance info
+    const start=r.payperiod_start, end=r.payperiod_end;
+    if(r.emp_id && start && end) fetchComputation(r.emp_id, start, end, /*editMode*/true);
+    recalcNet();
     document.getElementById('pay-modal').classList.add('open');
   }
 
   function closeModal(){ document.getElementById('pay-modal').classList.remove('open'); editId=null; }
+
+  function clearModalFields(){
+    ['m-employee','m-dept','m-position','m-period-start','m-period-end',
+     'm-base','m-bonus','m-ot','m-sss','m-philhealth','m-pagibig','m-tax'].forEach(id=>{
+      document.getElementById(id).value='';
+    });
+    document.getElementById('m-days-attended').textContent ='—';
+    document.getElementById('m-working-days').textContent  ='—';
+    document.getElementById('m-daily-rate').textContent    ='—';
+    document.getElementById('m-deduction-total').textContent='₱0.00';
+    document.getElementById('m-net-preview').textContent   ='₱0.00';
+    document.getElementById('m-comp-status').textContent   ='';
+  }
+
+  /* Triggered when employee select or either date changes */
+  async function onEmployeeOrDateChange(){
+    const empId = document.getElementById('m-employee').value;
+    const start = document.getElementById('m-period-start').value;
+    const end   = document.getElementById('m-period-end').value;
+
+    // Auto-fill dept/position
+    const emp=employees.find(e=>e.emp_id==empId);
+    document.getElementById('m-dept').value    =emp?emp.dept_name||'N/A':'';
+    document.getElementById('m-position').value=emp?emp.pos_name ||'N/A':'';
+
+    if(!empId||!start||!end) return;
+    await fetchComputation(empId, start, end, false);
+  }
+
+  /* Calls get_payroll_computation.php and fills all auto-fields */
+  async function fetchComputation(empId, start, end, editMode){
+    document.getElementById('m-comp-status').textContent='Computing…';
+
+    try{
+      const params=new URLSearchParams({emp_id:empId, payperiod_start:start, payperiod_end:end});
+      const res  =await fetch('../src/api/hr/payroll/get_payroll_computation.php?'+params);
+      const data =await res.json();
+
+      if(data.status==='success'){
+        const c=data.computation;
+
+        // Attendance meta
+        document.getElementById('m-days-attended').textContent=c.days_attended??'—';
+        document.getElementById('m-working-days').textContent =c.total_working_days_in_cutoff??'—';
+        document.getElementById('m-daily-rate').textContent   =c.daily_rate?fmt(c.daily_rate):'—';
+
+        // In edit mode keep existing base salary; in add mode always overwrite
+        if(!editMode){
+          document.getElementById('m-base').value=c.cutoff_base_salary??'';
+        }
+
+        // Always overwrite deductions with fresh computation
+        document.getElementById('m-sss').value        =c.sss??'';
+        document.getElementById('m-philhealth').value =c.philhealth??'';
+        document.getElementById('m-pagibig').value    =c.pag_ibig??'';
+        document.getElementById('m-tax').value        =c.tax??'';
+
+        document.getElementById('m-comp-status').textContent='';
+        recalcNet();
+      } else {
+        document.getElementById('m-comp-status').textContent='Could not compute';
+        showToast(data.message||'Computation failed','error');
+      }
+    }catch(err){
+      document.getElementById('m-comp-status').textContent='Error';
+      showToast('Error fetching computation','error');
+      console.error(err);
+    }
+  }
+
+  /* Recalculate Total Deductions and Net Salary whenever any value changes */
+  function recalcNet(){
+    const base =parseFloat(document.getElementById('m-base').value)       ||0;
+    const bon  =parseFloat(document.getElementById('m-bonus').value)      ||0;
+    const ot   =parseFloat(document.getElementById('m-ot').value)         ||0;
+    const sss  =parseFloat(document.getElementById('m-sss').value)        ||0;
+    const ph   =parseFloat(document.getElementById('m-philhealth').value) ||0;
+    const pi   =parseFloat(document.getElementById('m-pagibig').value)    ||0;
+    const tax  =parseFloat(document.getElementById('m-tax').value)        ||0;
+    const ded  =sss+ph+pi+tax;
+    const net  =Math.max(0,base+bon+ot-ded);
+    document.getElementById('m-deduction-total').textContent=fmt(ded);
+    document.getElementById('m-net-preview').textContent    =fmt(net);
+  }
 
   /* ── SAVE RECORD ────────────────────────────────────────────── */
   async function saveRecord(){
@@ -640,57 +825,41 @@ require_once '../src/config/db.php';
     const end  =document.getElementById('m-period-end').value;
     if(!start||!end){ showToast('Please set pay period dates','error'); return; }
     const base=parseFloat(document.getElementById('m-base').value)||0;
-    if(base<=0){ showToast('Base salary is required','error'); return; }
+    if(base<=0){ showToast('Base salary could not be computed. Check attendance records.','error'); return; }
 
-    const data={
-        emp_id:          parseInt(empId),
-        payperiod_start: start,
-        payperiod_end:   end,
-        base_salary:     base,
-        bonus:           parseFloat(document.getElementById('m-bonus').value)||0,
-        overtime:        document.getElementById('m-ot').value||'0',
-        deduction_total: parseFloat(document.getElementById('m-deductions').value)||0,
-        deductions_label:document.getElementById('m-deductions-label').value||''
+    const payload={
+      emp_id:          parseInt(empId),
+      payperiod_start: start,
+      payperiod_end:   end,
+      base_salary:     base,
+      bonus:           parseFloat(document.getElementById('m-bonus').value)||0,
+      overtime:        document.getElementById('m-ot').value||'0',
+      sss:             parseFloat(document.getElementById('m-sss').value)        ||0,
+      philhealth:      parseFloat(document.getElementById('m-philhealth').value) ||0,
+      pag_ibig:        parseFloat(document.getElementById('m-pagibig').value)    ||0,
+      tax:             parseFloat(document.getElementById('m-tax').value)        ||0,
     };
 
     try{
-        if(editId) data.payroll_id=parseInt(editId);
-        const url=editId
-            ?'../src/api/hr/payroll/update_payroll.php'
-            :'../src/api/hr/payroll/add_payroll.php';
-        
-        console.log('Sending to:', url, 'Data:', data);
-        
-        const res=await fetch(url,{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(data)
-        });
-        
-        const result=await res.json();
-        console.log('Response:', result);
-        
-        if(result.status==='success'){
-            showToast(editId?'Payroll updated successfully':'Payroll record created');
-            closeModal(); 
-            loadPayrolls();
-        } else { 
-            showToast(result.message||'Failed to save','error'); 
-        }
-    }catch(err){ 
-        showToast('Error saving record','error'); 
-        console.error('Save error:', err);
-    }
+      if(editId) payload.payroll_id=parseInt(editId);
+      const url=editId
+        ?'../src/api/hr/payroll/update_payroll.php'
+        :'../src/api/hr/payroll/add_payroll.php';
+
+      const res   =await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const result=await res.json();
+
+      if(result.status==='success'){
+        showToast(editId?'Payroll updated successfully':'Payroll record created');
+        closeModal(); loadPayrolls();
+      } else { showToast(result.message||'Failed to save','error'); }
+    }catch(err){ showToast('Error saving record','error'); console.error(err); }
   }
 
   /* ── SEND TO FINANCE ───────────────────────────────────────── */
   async function sendToFinance(id){
     try{
-      const res=await fetch('../src/api/hr/payroll/submit_payroll.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({payroll_ids:[id]})
-      });
+      const res   =await fetch('../src/api/hr/payroll/submit_payroll.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payroll_ids:[id]})});
       const result=await res.json();
       if(result.status==='success'){ showToast('Sent to Finance for approval'); loadPayrolls(); }
       else { showToast(result.message||'Failed to send','error'); }
@@ -700,13 +869,8 @@ require_once '../src/config/db.php';
   async function sendAllToFinance(){
     const pending=records.filter(r=>r.approval_status==='Pending');
     if(!pending.length){ showToast('No pending records to send','error'); return; }
-
     try{
-      const res=await fetch('../src/api/hr/payroll/submit_payroll.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({payroll_ids:pending.map(r=>r.payroll_id)})
-      });
+      const res   =await fetch('../src/api/hr/payroll/submit_payroll.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payroll_ids:pending.map(r=>r.payroll_id)})});
       const result=await res.json();
       if(result.status==='success'){ showToast(result.message||`${pending.length} records sent to Finance`); loadPayrolls(); }
       else { showToast(result.message||'Failed to send','error'); }
@@ -716,13 +880,8 @@ require_once '../src/config/db.php';
   async function sendEmployeeToFinance(empId){
     const empPending=records.filter(r=>r.emp_id==empId&&r.approval_status==='Pending');
     if(!empPending.length){ showToast('No pending records for this employee','error'); return; }
-
     try{
-      const res=await fetch('../src/api/hr/payroll/submit_payroll.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({payroll_ids:empPending.map(r=>r.payroll_id)})
-      });
+      const res   =await fetch('../src/api/hr/payroll/submit_payroll.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payroll_ids:empPending.map(r=>r.payroll_id)})});
       const result=await res.json();
       if(result.status==='success'){ showToast(result.message||`${empPending.length} records sent to Finance`); loadPayrolls(); }
       else { showToast(result.message||'Failed to send','error'); }
@@ -735,13 +894,8 @@ require_once '../src/config/db.php';
 
   async function confirmDelete(){
     if(!deleteId) return;
-    
     try{
-      const res=await fetch('../src/api/hr/payroll/delete_payroll.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({payroll_id:deleteId})
-      });
+      const res   =await fetch('../src/api/hr/payroll/delete_payroll.php',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payroll_id:deleteId})});
       const result=await res.json();
       if(result.status==='success'){ showToast('Payroll record deleted'); closeDelModal(); loadPayrolls(); }
       else { showToast(result.message||'Failed to delete','error'); }
@@ -750,8 +904,16 @@ require_once '../src/config/db.php';
 
   /* ── EXPORT CSV ─────────────────────────────────────────────── */
   function exportCSV(){
-    const headers=['ID','Employee','Department','Position','Period Start','Period End','Base Salary','Bonus','Overtime','Deductions','Net Salary','Status'];
-    const rows=records.map(r=>[r.payroll_id,r.emp_fname+' '+r.emp_lname,r.dept_name||'N/A',r.pos_name||'N/A',r.payperiod_start,r.payperiod_end,r.base_salary,r.bonus||0,r.overtime||0,r.deduction_total||0,r.net_salary,r.approval_status||'Pending']);
+    const headers=['ID','Employee','Department','Position','Period Start','Period End','Base Salary','Bonus','Overtime','SSS','PhilHealth','Pag-IBIG','Tax','Total Deductions','Net Salary','Status'];
+    const rows=records.map(r=>[
+      r.payroll_id, r.emp_fname+' '+r.emp_lname,
+      r.dept_name||'N/A', r.pos_name||'N/A',
+      r.payperiod_start, r.payperiod_end,
+      r.base_salary, r.bonus||0, r.overtime||0,
+      r.sss||0, r.philhealth||0, r.pag_ibig||0, r.tax||0,
+      r.deduction_total||0, r.net_salary,
+      r.approval_status||'Pending'
+    ]);
     const csv=[headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
     const a=document.createElement('a');
     a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
@@ -759,115 +921,59 @@ require_once '../src/config/db.php';
   }
 
   /* ── EXPORT PDF ────────────────────────────────────────────── */
-  async function exportPDF() {
-    try {
-      const doc = new jsPDF();
-      
-      // Add logo
-      const logoUrl = '../assets/images/code_latte.png';
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
-      
-      await new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = logoUrl;
-      });
-      
-      // Convert to base64
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const logoData = canvas.toDataURL('image/png');
-      
-      // Add logo to PDF (top left, 20x20mm with rounded corners effect)
-      doc.addImage(logoData, 'PNG', 10, 10, 20, 20);
-      
-      // Company name
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Code Latte', 35, 20);
-      
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text('Payroll Report', 35, 28);
-      
-      // Date generated
-      const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-      doc.setFontSize(10);
-      doc.text(`Generated: ${today}`, 35, 34);
-      
-      // Line separator
-      doc.setDrawColor(92, 74, 30);
-      doc.setLineWidth(0.5);
-      doc.line(10, 40, 200, 40);
-      
-      // Summary stats
-      const totalNet = records.reduce((s,r)=>s+parseFloat(r.net_salary),0);
-      const totalRecords = records.length;
-      
+  async function exportPDF(){
+    try{
+      const doc=new jsPDF();
+      const logoUrl='../assets/images/code_latte.png';
+      const img=new Image(); img.crossOrigin='Anonymous';
+      await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=logoUrl; });
+      const canvas=document.createElement('canvas');
+      canvas.width=img.width; canvas.height=img.height;
+      canvas.getContext('2d').drawImage(img,0,0);
+      doc.addImage(canvas.toDataURL('image/png'),'PNG',10,10,20,20);
+      doc.setFontSize(20); doc.setFont('helvetica','bold'); doc.text('Code Latte',35,20);
+      doc.setFontSize(12); doc.setFont('helvetica','normal'); doc.text('Payroll Report',35,28);
+      const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+      doc.setFontSize(10); doc.text(`Generated: ${today}`,35,34);
+      doc.setDrawColor(92,74,30); doc.setLineWidth(0.5); doc.line(10,40,200,40);
+      const totalNet=records.reduce((s,r)=>s+parseFloat(r.net_salary),0);
       doc.setFontSize(11);
-      doc.text(`Total Records: ${totalRecords}`, 10, 50);
-      doc.text(`Total Net Salary: ${fmt(totalNet)}`, 10, 58);
-      
-      // Table data
-      const tableData = records.map(r => [
+      doc.text(`Total Records: ${records.length}`,10,50);
+      doc.text(`Total Net Salary: ${fmt(totalNet)}`,10,58);
+      const tableData=records.map(r=>[
         `${r.emp_fname} ${r.emp_lname}`,
-        r.dept_name || 'N/A',
-        r.pos_name || 'N/A',
+        r.dept_name||'N/A',
         `${r.payperiod_start} to ${r.payperiod_end}`,
         fmt(r.base_salary),
-        fmt(r.bonus || 0),
-        fmt(r.overtime || 0),
-        fmt(r.deduction_total || 0),
+        fmt(r.bonus||0),
+        fmt(r.overtime||0),
+        fmt(r.sss||0),
+        fmt(r.philhealth||0),
+        fmt(r.pag_ibig||0),
+        fmt(r.tax||0),
+        fmt(r.deduction_total||0),
         fmt(r.net_salary),
         r.approval_status
       ]);
-      
-      // Auto table
       doc.autoTable({
-        startY: 68,
-        head: [['Employee', 'Dept', 'Position', 'Period', 'Base', 'Bonus', 'OT', 'Deductions', 'Net', 'Status']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: {
-          fillColor: [92, 74, 30],
-          textColor: [255, 255, 255],
-          fontSize: 9
-        },
-        bodyStyles: {
-          fontSize: 9
-        },
-        columnStyles: {
-          0: { cellWidth: 30 },
-          3: { cellWidth: 35 },
-          8: { fontStyle: 'bold' }
-        },
-        styles: {
-          overflow: 'ellipsize',
-          cellPadding: 2
-        },
-        margin: { top: 10 }
+        startY:68,
+        head:[['Employee','Dept','Period','Base','Bonus','OT','SSS','PhilHealth','Pag-IBIG','Tax','Deductions','Net','Status']],
+        body:tableData,
+        theme:'striped',
+        headStyles:{fillColor:[92,74,30],textColor:[255,255,255],fontSize:8},
+        bodyStyles:{fontSize:8},
+        columnStyles:{0:{cellWidth:28},2:{cellWidth:32},11:{fontStyle:'bold'}},
+        styles:{overflow:'ellipsize',cellPadding:2},
+        margin:{top:10}
       });
-      
-      // Footer
-      const pageCount = doc.internal.getNumberOfPages();
-      for(let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(128);
-        doc.text(`Code Latte HR System - Page ${i} of ${pageCount}`, 105, 285, { align: 'center' });
+      const pageCount=doc.internal.getNumberOfPages();
+      for(let i=1;i<=pageCount;i++){
+        doc.setPage(i); doc.setFontSize(8); doc.setTextColor(128);
+        doc.text(`Code Latte HR System - Page ${i} of ${pageCount}`,105,285,{align:'center'});
       }
-      
       doc.save(`Code_Latte_Payroll_${new Date().toISOString().split('T')[0]}.pdf`);
       showToast('PDF exported successfully');
-      
-    } catch (err) {
-      console.error('PDF export error:', err);
-      showToast('Error exporting PDF - check console for details', 'error');
-    }
+    }catch(err){ console.error('PDF export error:',err); showToast('Error exporting PDF','error'); }
   }
 
   document.getElementById('pay-modal').addEventListener('click', function(e){ if(e.target===this) closeModal(); });

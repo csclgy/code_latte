@@ -1,3 +1,4 @@
+<?php require_once '../src/api/auth/check_session.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,14 +25,13 @@
       --shadow:   0 2px 12px rgba(80,60,20,.08);
     }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+}
 
     /* ── SIDEBAR ── */
     aside {
@@ -43,19 +43,17 @@
       flex-direction: column;
       padding: 24px 0;
       flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      align-self: flex-start;
     }
     .logo {
       display: flex; align-items: center; gap: 10px;
       padding: 0 20px 28px;
       border-bottom: 1px solid var(--border);
     }
-    .logo-icon {
-      width: 34px; height: 34px;
-      background: var(--accent);
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: 15px;
-    }
+    .logo-icon { width:34px; height:34px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:8px; }
     .logo-text .name { font-family: 'DM Serif Display', serif; font-size: 15px; line-height:1.1; }
     .logo-text .sub  { font-size: 11px; color: var(--muted); }
     nav { flex: 1; padding: 20px 0; }
@@ -91,8 +89,8 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      overflow: visible;
       padding: 32px 36px;
       gap: 20px;
     }
@@ -136,6 +134,21 @@
       to   { opacity:1; transform: translateY(0); }
     }
 
+    .form-section {
+      margin-bottom: 22px;
+    }
+  .form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 6px 12px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  background: var(--accent);
+  border-left: 4px solid var(--gold);
+  }
     .form-panel h2 { font-size: 15px; font-weight: 600; margin-bottom: 20px; }
 
     .form-grid {
@@ -346,6 +359,7 @@
       font-size: 13px; font-weight: 600;
       color: #fff; cursor: pointer;
     }
+    
   </style>
 </head>
 <body>
@@ -353,7 +367,9 @@
 <!-- SIDEBAR -->
 <aside>
   <div class="logo">
-    <div class="logo-icon">{}&#x2609;</div>
+    <div class="logo-icon">
+      <img src="../assets/images/code_latte.png" alt="Code Latte Logo" onerror="this.style.display='none'; this.parentElement.textContent='☕';">
+    </div>
     <div class="logo-text">
       <div class="name">Code Latte</div>
       <div class="sub">HR System</div>
@@ -382,11 +398,20 @@
     </a>
   </nav>
   <div class="user-block">
-    <div class="avatar">A</div>
-    <div class="user-info">
-      <div class="uname">Admin</div>
-      <div class="urole">Store Manager</div>
+    <div class="avatar">
+      <?= strtoupper(substr($_SESSION['emp_fname'] ?? 'A', 0, 1)) ?>
     </div>
+    <div class="user-info">
+      <div class="uname"><?= htmlspecialchars($_SESSION['emp_fname'] ?? 'Admin') ?></div>
+      <div class="urole"><?= htmlspecialchars($_SESSION['pos_name'] ?? 'Staff') ?></div>
+    </div>
+    <a href="/hrm_module/src/api/auth/logout.php" title="Logout" style="margin-left:auto; color:var(--muted);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </a>
   </div>
 </aside>
 
@@ -400,110 +425,152 @@
   <!-- INLINE FORM -->
 <div class="form-panel" id="emp-form-panel">
   <h2 id="form-title">New Employee</h2>
-  <div class="form-grid">
 
-    <div class="form-group">
-      <label>First Name</label>
-      <input type="text" id="f-fname" name="emp_fname" placeholder="First name"/>
+  <!-- EMPLOYEE INFORMATION -->
+  <div class="form-section">
+    <div class="form-section-title">Employee Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" id="f-fname" name="emp_fname" placeholder="First name"/>
+      </div>
+      <div class="form-group">
+        <label>Last Name</label>
+        <input type="text" id="f-lname" name="emp_lname" placeholder="Last name"/>
+      </div>
+      <div class="form-group">
+        <label>Middle Name</label>
+        <input type="text" id="f-mname" name="emp_mname" placeholder="Middle name"/>
+      </div>
+      <div class="form-group">
+        <label>Age</label>
+        <input type="number" id="f-age" name="emp_age" placeholder="e.g. 25" min="16" max="80"/>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="f-email" name="emp_email" placeholder="email@codelatte.com"/>
+      </div>
+      <div class="form-group">
+        <label>Contact</label>
+        <input type="text" id="f-contact" name="emp_contact" placeholder="+63 9XX XXX XXXX"/>
+      </div>
+      <div class="form-group" style="grid-column: 1 / -1;">
+        <label>Address</label>
+        <input type="text" id="f-address" name="emp_address" placeholder="Street, Barangay, City"/>
+      </div>
     </div>
-
-    <div class="form-group">
-      <label>Last Name</label>
-      <input type="text" id="f-lname" name="emp_lname" placeholder="Last name"/>
-    </div>
-
-    <div class="form-group">
-      <label>Middle Name</label>
-      <input type="text" id="f-mname" name="emp_mname" placeholder="Middle name"/>
-    </div>
-
-    <div class="form-group">
-      <label>Age</label>
-      <input type="number" id="f-age" name="emp_age" placeholder="e.g. 25" min="16" max="80"/>
-    </div>
-
-    <div class="form-group">
-      <label>Email</label>
-      <input type="email" id="f-email" name="emp_email" placeholder="email@codelatte.com"/>
-    </div>
-
-    <div class="form-group">
-      <label>Contact</label>
-      <input type="text" id="f-contact" name="emp_contact" placeholder="+63 9XX XXX XXXX"/>
-    </div>
-
-    <div class="form-group" style="grid-column: 1 / -1;">
-      <label>Address</label>
-      <input type="text" id="f-address" name="emp_address" placeholder="Street, Barangay, City"/>
-    </div>
-
-    <div class="form-group">
-      <label>Department</label>
-      <select id="f-dept" name="dept_id">
-        <option value="">Select department...</option>
-        <!-- populate from your dept table -->
-        <option value="1">Kitchen</option>
-        <option value="2">Front of House</option>
-        <option value="3">Management</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Position</label>
-      <select id="f-pos" name="Pos_id">
-        <option value="">Select position...</option>
-        <!-- populate from your position table -->
-        <option value="1">Barista</option>
-        <option value="2">Cashier</option>
-        <option value="3">Kitchen Staff</option>
-        <option value="4">Supervisor</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Schedule</label>
-      <select id="f-schedule" name="emp_schedule">
-        <option value="Morning">Morning (6AM–2PM)</option>
-        <option value="Afternoon">Afternoon (2PM–10PM)</option>
-        <option value="Evening">Evening (10PM–6AM)</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Working Hours</label>
-      <input type="number" id="f-hours" name="emp_working_hours" placeholder="e.g. 8" min="1" max="24"/>
-    </div>
-
-    <div class="form-group">
-      <label>Date Hired</label>
-      <input type="date" id="f-date" name="emp_date_hired"/>
-    </div>
-
-    <div class="form-group">
-      <label>Status</label>
-      <select id="f-status" name="emp_status">
-        <option value="Active">Active</option>
-        <option value="On Leave">On Leave</option>
-        <option value="Inactive">Inactive</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label>Username</label>
-      <input type="text" id="f-username" name="user_name" placeholder="e.g. jreyes"/>
-    </div>
-
-    <div class="form-group">
-      <label>Password</label>
-      <input type="password" id="f-password" name="user_password" placeholder="Set a password"/>
-    </div>
-
   </div>
+
+  <!-- EMPLOYMENT INFORMATION -->
+  <div class="form-section">
+    <div class="form-section-title">Employment Information</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Department</label>
+        <select id="f-dept" name="dept_id">
+          <option value="">Select department...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <select id="f-pos" name="pos_id">
+          <option value="">Select position...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Schedule</label>
+        <select id="f-schedule" name="emp_schedule">
+          <option value="Morning">Morning (6AM–2PM)</option>
+          <option value="Afternoon">Afternoon (2PM–10PM)</option>
+          <option value="Evening">Evening (10PM–6AM)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Working Hours</label>
+        <input type="number" id="f-hours" name="emp_working_hours" placeholder="e.g. 8" min="1" max="24"/>
+      </div>
+      <div class="form-group">
+        <label>Basic Salary</label>
+        <input type="number" id="f-salary" name="emp_basic_salary" placeholder="e.g. 15000" min="0"/>
+      </div>
+      <div class="form-group">
+        <label>Date Hired</label>
+        <input type="date" id="f-date" name="emp_date_hired"/>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status" name="emp_status">
+          <option value="Active">Active</option>
+          <option value="On Leave">On Leave</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="form-group">
+      <label>Employment Type</label>
+      <select id="f-emp-type" name="emp_type">
+        <option value="">Select type...</option>
+        <option value="Regular">Regular</option>
+        <option value="Probationary">Probationary</option>
+        <option value="Contractual">Contractual</option>
+        <option value="Part-time">Part-time</option>
+        <option value="Seasonal">Seasonal</option>
+      </select>
+    </div>
+      <div class="form-group">
+        <label>SSS ID</label>
+        <input type="text" id="f-sss" name="emp_SSS" placeholder="XX-XXXXXXX-X"/>
+      </div>
+      <div class="form-group">
+        <label>TIN ID</label>
+        <input type="text" id="f-tin" name="emp_TIN" placeholder="XXX-XXX-XXX"/>
+      </div>
+      <div class="form-group">
+        <label>PhilHealth ID</label>
+        <input type="text" id="f-philhealth" name="emp_Philhealth" placeholder="XX-XXXXXXXXX-X"/>
+      </div>
+      <div class="form-group">
+        <label>Pag-IBIG ID</label>
+        <input type="text" id="f-pagibig" name="emp_Pagibig" placeholder="XXXX-XXXX-XXXX"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- EMERGENCY CONTACT -->
+  <div class="form-section">
+    <div class="form-section-title">Contact in Case of Emergency</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Contact Name</label>
+        <input type="text" id="f-emergency-name" name="emp_contactemergency" placeholder="Full name"/>
+      </div>
+      <div class="form-group">
+        <label>Contact Number</label>
+        <input type="text" id="f-emergency-num" name="emp_contactemergencynum" placeholder="+63 9XX XXX XXXX"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT DETAILS -->
+  <div class="form-section">
+    <div class="form-section-title">Account Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="f-username" name="user_name" placeholder="e.g. jreyes"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="f-password" name="user_password" placeholder="Set a password"/>
+      </div>
+    </div>
+  </div>
+
   <div class="form-actions">
     <button class="btn-save" onclick="saveEmployee()">Save</button>
     <button class="btn-cancel" onclick="closeForm()">Cancel</button>
   </div>
 </div>
+
 
   <!-- TABLE PANEL -->
   <div class="table-panel">
@@ -514,10 +581,7 @@
       </div>
       <select id="role-filter" onchange="filterTable()">
         <option value="">All Roles</option>
-        <option>Barista</option>
-        <option>Cashier</option>
-        <option>Kitchen Staff</option>
-        <option>Supervisor</option>
+        <!-- populated dynamically -->
       </select>
       <select id="status-filter" onchange="filterTable()">
         <option value="">All Status</option>
@@ -565,8 +629,67 @@
   let employees   = [];
   let editIndex   = null;
   let deleteIndex = null;
+  let positionMap = {}; // ← declared at top
+  let deptMap     = {}; // ← declared at top
 
-  // ── LOAD ──
+  // ── LOAD DROPDOWNS ──
+  async function loadDropdowns() {
+    try {
+      const [deptRes, posRes] = await Promise.all([
+        fetch(`${BASE}/get_departments.php`),
+        fetch(`${BASE}/get_positions.php`)
+      ]);
+
+      const deptJson = await deptRes.json();
+      const posJson  = await posRes.json();
+
+      // Populate departments
+      if (deptJson.success) {
+        const deptSel = document.getElementById('f-dept');
+        deptSel.innerHTML = '<option value="">Select department...</option>';
+        deptJson.data.forEach(d => {
+          deptMap[String(d.dept_id)] = d.dept_name;
+          const opt = document.createElement('option');
+          opt.value       = d.dept_id;
+          opt.textContent = d.dept_name;
+          deptSel.appendChild(opt);
+        });
+      }
+
+      // Populate positions (form dropdown + role filter)
+      if (posJson.success) {
+        const posSel    = document.getElementById('f-pos');
+        const roleFilter = document.getElementById('role-filter'); // ← filter dropdown
+
+        posSel.innerHTML    = '<option value="">Select position...</option>';
+        roleFilter.innerHTML = '<option value="">All Roles</option>'; // ← reset filter
+
+        posJson.data.forEach(p => {
+          positionMap[String(p.pos_id)] = p.pos_name;
+
+          // Add to form dropdown
+          const formOpt = document.createElement('option');
+          formOpt.value       = p.pos_id;
+          formOpt.textContent = p.pos_name;
+          posSel.appendChild(formOpt);
+
+          // Add to role filter dropdown ← same data, different dropdown
+          const filterOpt = document.createElement('option');
+          filterOpt.value       = p.pos_id; // ← use pos_id as value for filtering
+          filterOpt.textContent = p.pos_name;
+          roleFilter.appendChild(filterOpt);
+        });
+      }
+
+      // Load employees AFTER maps are populated
+      loadEmployees();
+
+    } catch (err) {
+      console.error('Dropdown load error:', err);
+    }
+  }
+
+  // ── LOAD EMPLOYEES ──
   async function loadEmployees() {
     try {
       const res  = await fetch(`${BASE}/get_employees.php`);
@@ -582,7 +705,7 @@
     }
   }
 
-  // ── RENDER TABLE ──
+  // ── HELPERS ──
   function statusClass(s) {
     if (s === 'Active')   return 'active';
     if (s === 'On Leave') return 'on-leave';
@@ -590,10 +713,14 @@
   }
 
   function getPosLabel(pos_id) {
-    const map = { '1':'Barista', '2':'Cashier', '3':'Kitchen Staff', '4':'Supervisor' };
-    return map[String(pos_id)] || '—';
+    return positionMap[String(pos_id)] || '—'; // ← String() to handle number/string mismatch
   }
 
+  function getDeptLabel(dept_id) {
+    return deptMap[String(dept_id)] || '—';
+  }
+
+  // ── RENDER TABLE ──
   function renderTable(list) {
     const tbody = document.getElementById('emp-table-body');
     document.getElementById('record-count').textContent =
@@ -654,12 +781,15 @@
 
   function clearForm() {
     ['f-fname','f-lname','f-mname','f-email','f-contact',
-     'f-address','f-date','f-hours','f-age','f-username','f-password'
+     'f-address','f-date','f-hours','f-age','f-username',
+     'f-password', 'f-salary', 'f-emergency-name', 'f-emergency-num', 
+     'f-sss', 'f-tin', 'f-philhealth', 'f-pagibig'
     ].forEach(id => document.getElementById(id).value = '');
     document.getElementById('f-dept').value     = '';
     document.getElementById('f-pos').value      = '';
     document.getElementById('f-schedule').value = 'Morning';
     document.getElementById('f-status').value   = 'Active';
+    document.getElementById('f-emp-type').value = '';
   }
 
   // ── OPEN EDIT FORM ──
@@ -668,22 +798,29 @@
     const e = employees[idx];
     document.getElementById('form-title').textContent = 'Edit Employee';
 
-    document.getElementById('f-fname').value    = e.emp_fname    ?? '';
-    document.getElementById('f-lname').value    = e.emp_lname    ?? '';
-    document.getElementById('f-mname').value    = e.emp_mname    ?? '';
-    document.getElementById('f-email').value    = e.emp_email    ?? '';
-    document.getElementById('f-contact').value  = e.emp_contact  ?? '';
-    document.getElementById('f-address').value  = e.emp_address  ?? '';
-    document.getElementById('f-dept').value     = e.dept_id      ?? '';
-    document.getElementById('f-pos').value      = e.pos_id       ?? '';
-    document.getElementById('f-schedule').value = e.emp_schedule ?? 'Morning';
+    document.getElementById('f-fname').value    = e.emp_fname         ?? '';
+    document.getElementById('f-lname').value    = e.emp_lname         ?? '';
+    document.getElementById('f-mname').value    = e.emp_mname         ?? '';
+    document.getElementById('f-email').value    = e.emp_email         ?? '';
+    document.getElementById('f-contact').value  = e.emp_contact       ?? '';
+    document.getElementById('f-address').value  = e.emp_address       ?? '';
+    document.getElementById('f-dept').value     = e.dept_id           ?? '';
+    document.getElementById('f-pos').value      = e.pos_id            ?? '';
+    document.getElementById('f-schedule').value = e.emp_schedule      ?? 'Morning';
     document.getElementById('f-hours').value    = e.emp_working_hours ?? '';
-    document.getElementById('f-age').value      = e.emp_age      ?? '';
-    document.getElementById('f-status').value   = e.emp_status   ?? 'Active';
-    document.getElementById('f-username').value = e.User_name    ?? '';
+    document.getElementById('f-age').value      = e.emp_age           ?? '';
+    document.getElementById('f-status').value   = e.emp_status        ?? 'Active';
+    document.getElementById('f-username').value = e.user_name         ?? ''; // ← fixed from e.User_name
     document.getElementById('f-password').value = ''; // never pre-fill
+    document.getElementById('f-salary').value         = e.emp_basic_salary        ?? '';
+    document.getElementById('f-emergency-name').value = e.emp_contactemergency    ?? '';
+    document.getElementById('f-emergency-num').value  = e.emp_contactemergencynum ?? '';
+    document.getElementById('f-sss').value            = e.emp_SSS                 ?? '';
+    document.getElementById('f-tin').value            = e.emp_TIN                 ?? '';
+    document.getElementById('f-philhealth').value     = e.emp_Philhealth          ?? '';
+    document.getElementById('f-pagibig').value        = e.emp_Pagibig             ?? '';
+    document.getElementById('f-emp-type').value = e.emp_type ?? '';
 
-    // format date for input[type=date]
     if (e.emp_date_hired) {
       const d = new Date(e.emp_date_hired);
       if (!isNaN(d)) document.getElementById('f-date').value = d.toISOString().split('T')[0];
@@ -701,12 +838,11 @@
     const username = document.getElementById('f-username').value.trim();
     const password = document.getElementById('f-password').value;
 
-    // Validation
-    if (!fname || !lname)        { alert('Please enter first and last name.'); return; }
-    if (!dept_id)                { alert('Please select a department.'); return; }
-    if (!pos_id)                 { alert('Please select a position.'); return; }
-    if (!username)               { alert('Please enter a username.'); return; }
-    if (editIndex === null && !password) { alert('Please enter a password.'); return; }
+    if (!fname || !lname)                        { alert('Please enter first and last name.'); return; }
+    if (!dept_id)                                { alert('Please select a department.'); return; }
+    if (!pos_id)                                 { alert('Please select a position.'); return; }
+    if (!username)                               { alert('Please enter a username.'); return; }
+    if (editIndex === null && !password)         { alert('Please enter a password.'); return; }
 
     const payload = {
       emp_fname:         fname,
@@ -715,18 +851,25 @@
       emp_email:         document.getElementById('f-email').value.trim(),
       emp_contact:       document.getElementById('f-contact').value.trim(),
       emp_address:       document.getElementById('f-address').value.trim(),
-      emp_age:           document.getElementById('f-age').value || null,
+      emp_age:           document.getElementById('f-age').value           || null,
       dept_id:           dept_id,
       pos_id:            pos_id,
       emp_schedule:      document.getElementById('f-schedule').value,
-      emp_working_hours: document.getElementById('f-hours').value || null,
-      emp_date_hired:    document.getElementById('f-date').value || null,
+      emp_working_hours: document.getElementById('f-hours').value         || null,
+      emp_date_hired:    document.getElementById('f-date').value          || null,
       emp_status:        document.getElementById('f-status').value,
       user_name:         username,
       user_password:     password,
+      emp_basic_salary:        document.getElementById('f-salary').value           || null,
+      emp_contactemergency:    document.getElementById('f-emergency-name').value.trim(),
+      emp_contactemergencynum: document.getElementById('f-emergency-num').value.trim(),
+      emp_SSS:                 document.getElementById('f-sss').value.trim(),
+      emp_TIN:                 document.getElementById('f-tin').value.trim(),
+      emp_Philhealth:          document.getElementById('f-philhealth').value.trim(),
+      emp_Pagibig:             document.getElementById('f-pagibig').value.trim(),
+      emp_type: document.getElementById('f-emp-type').value,
     };
 
-    // If editing, attach the emp_id
     const isEdit = editIndex !== null;
     if (isEdit) payload.emp_id = employees[editIndex].emp_id;
 
@@ -740,7 +883,7 @@
 
       if (json.success) {
         closeForm();
-        loadEmployees(); // re-fetch from DB to stay in sync
+        loadEmployees();
       } else {
         alert('Error: ' + json.error);
       }
@@ -762,7 +905,6 @@
 
   async function confirmDelete() {
     if (deleteIndex === null) return;
-
     try {
       const res  = await fetch(`${BASE}/delete_employee.php`, {
         method:  'POST',
@@ -770,10 +912,9 @@
         body:    JSON.stringify({ emp_id: employees[deleteIndex].emp_id }),
       });
       const json = await res.json();
-
       if (json.success) {
         closeDeleteModal();
-        loadEmployees(); // re-fetch from DB
+        loadEmployees();
       } else {
         alert('Error: ' + json.error);
       }
@@ -788,8 +929,8 @@
     if (e.target === this) closeDeleteModal();
   });
 
-  // ── INIT ──
-  loadEmployees();
+  // ── INIT — only call loadDropdowns, it calls loadEmployees internally ──
+  loadDropdowns();
 </script>
 </body>
 </html>

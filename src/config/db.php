@@ -1,4 +1,9 @@
 <?php
+// $host   = '192.168.137.1';
+// $db     = 'mis_coffee';
+// $user   = 'student2';
+// $pass   = '1234'; 
+
 $host   = 'localhost';
 $db     = 'mis_coffee';
 $user   = 'root';

@@ -27,7 +27,7 @@ try {
             p.pos_name
         FROM employee_tbl e
         LEFT JOIN department_tbl d ON e.dept_id = d.dept_id
-        LEFT JOIN position_tbl   p ON e.pos_id  = p.post_id
+        LEFT JOIN position_tbl   p ON e.pos_id  = p.pos_id
     ";
 
     if (!$all) {
