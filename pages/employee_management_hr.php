@@ -419,7 +419,7 @@ body {
 <main>
   <div class="page-header">
     <h1>Employee Management</h1>
-    <button class="btn-add" onclick="toggleForm()">+ Add Employee</button>
+    <!-- <button class="btn-add" onclick="toggleForm()">+ Add Employee</button> -->
   </div>
 
   <!-- INLINE FORM -->
